@@ -285,6 +285,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--dark);m
     <div class="login-card">
       <div class="fg"><label>Email Address</label><input type="email" id="loginEmail" placeholder="john@example.com" value=""></div>
       <div class="fg"><label>Last Name</label><input type="text" id="loginName" placeholder="Last name" value=""></div>
+      <div class="fg"><label>Phone Number</label><input type="tel" id="loginPhone" placeholder="(203) 555-1234" value=""></div>
       <button class="btn" onclick="sendMagicLink()">Send Secure Link →</button>
     </div>
     <p class="login-note">We'll email you a secure login link.<br>It expires in 30 minutes — no password required.</p>
@@ -483,7 +484,8 @@ async function api(path, opts = {}) {
 async function sendMagicLink() {
   const email = document.getElementById('loginEmail').value.trim();
   const lastName = document.getElementById('loginName').value.trim();
-  if (!email || !lastName) return alert('Please enter both fields');
+  const phone = document.getElementById('loginPhone').value.trim();
+  if (!email || !lastName || !phone) return alert('Please fill in all fields');
 
   const btn = document.querySelector('.login-card .btn');
   btn.textContent = 'Sending...'; btn.disabled = true;
@@ -492,7 +494,7 @@ async function sendMagicLink() {
     const r = await fetch(API + '/auth/verify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, lastName })
+      body: JSON.stringify({ email, lastName, phone })
     });
     const data = await r.json();
     // Always show magic link view (don't reveal if email exists)
