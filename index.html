@@ -150,6 +150,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--dark);m
 .pol-bg.bc{background:#fde8e8;color:#b91c1c}
 .pol-ic{font-size:1.1rem;flex-shrink:0}
 .pol-carrier{font-size:0.72rem;color:var(--gray-400);margin-top:0.3rem;font-weight:500}
+.pol-premium{font-size:0.85rem;font-weight:700;color:var(--dark);margin-top:0.15rem}
 .pol-mt{display:flex;flex-direction:column;gap:0.2rem;margin-top:0.4rem}
 .pol-mt span{font-size:0.73rem;color:var(--gray-400)}
 .pol-mt strong{color:var(--gray-500);font-weight:600}
@@ -775,6 +776,7 @@ function renderPolicyCard(p) {
   var expLabel = (p.status === 'active' || p.status === 'renewing_soon') ? 'Expires ' : 'Expired ';
   var icon = getPolicyIcon(p.policyType);
   var carrier = p.carrierName ? '<div class="pol-carrier">' + escHtml(p.carrierName) + '</div>' : '';
+  var premium = p.premium ? '<div class="pol-premium">$' + Number(p.premium).toLocaleString('en-US') + '/yr</div>' : '';
   var claimBtns = '';
   if (p.claimsPhone || p.claimsUrl) {
     claimBtns = '<div class="pol-actions" onclick="event.stopPropagation()">';
@@ -782,7 +784,7 @@ function renderPolicyCard(p) {
     if (p.claimsUrl) claimBtns += '<a href="' + escAttr(p.claimsUrl) + '" target="_blank" rel="noopener" class="pol-claim pol-claim-web">🌐 File Claim Online</a>';
     claimBtns += '</div>';
   }
-  return '<div class="pol" onclick="viewPolicy(\'' + escAttr(p.policyNumber) + '\')"><div class="pol-top">' + icon + '<span class="pol-nm">' + escHtml(p.policyType) + '</span><span class="pol-bg ' + s.cls + '">' + s.text + '</span></div>' + carrier + '<div class="pol-mt"><span><strong>' + escHtml(p.producerName || '') + '</strong> · ' + escHtml(p.policyNumber) + '</span><span>' + expLabel + expDate + '</span></div>' + claimBtns + '</div>';
+  return '<div class="pol" onclick="viewPolicy(\'' + escAttr(p.policyNumber) + '\')"><div class="pol-top">' + icon + '<span class="pol-nm">' + escHtml(p.policyType) + '</span><span class="pol-bg ' + s.cls + '">' + s.text + '</span></div>' + carrier + premium + '<div class="pol-mt"><span><strong>' + escHtml(p.producerName || '') + '</strong> · ' + escHtml(p.policyNumber) + '</span><span>' + expLabel + expDate + '</span></div>' + claimBtns + '</div>';
 }
 
 /* ══════════════════════════════════════════
