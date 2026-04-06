@@ -153,8 +153,11 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--dark);m
 .pol-mt{display:flex;flex-direction:column;gap:0.2rem;margin-top:0.4rem}
 .pol-mt span{font-size:0.73rem;color:var(--gray-400)}
 .pol-mt strong{color:var(--gray-500);font-weight:600}
-.pol-claim{display:block;margin-top:0.6rem;padding:0.45rem 0;text-align:center;font-size:0.72rem;font-weight:700;color:var(--navy);background:rgba(0,75,137,0.06);border-radius:var(--radius-xs);text-decoration:none;letter-spacing:0.3px;transition:background 0.15s}
+.pol-actions{display:flex;gap:0.4rem;margin-top:0.6rem}
+.pol-claim{flex:1;display:block;padding:0.45rem 0.3rem;text-align:center;font-size:0.68rem;font-weight:700;color:var(--navy);background:rgba(0,75,137,0.06);border-radius:var(--radius-xs);text-decoration:none;letter-spacing:0.2px;transition:background 0.15s}
 .pol-claim:hover{background:rgba(0,75,137,0.12)}
+.pol-claim-web{color:var(--gold-hover);background:rgba(255,163,0,0.06)}
+.pol-claim-web:hover{background:rgba(255,163,0,0.12)}
 
 /* Doc Items */
 .doc{display:flex;align-items:center;gap:0.7rem;padding:0.75rem;background:var(--white);border:1px solid var(--gray-100);border-radius:var(--radius-sm);margin-bottom:0.4rem;cursor:pointer;transition:all 0.15s;box-shadow:var(--shadow-sm)}
@@ -768,8 +771,14 @@ function renderPolicyCard(p) {
   var expLabel = (p.status === 'active' || p.status === 'renewing_soon') ? 'Expires ' : 'Expired ';
   var icon = getPolicyIcon(p.policyType);
   var carrier = p.carrierName ? '<div class="pol-carrier">' + escHtml(p.carrierName) + '</div>' : '';
-  var claimBtn = p.claimsPhone ? '<a href="tel:' + escAttr(p.claimsPhone.replace(/[^0-9+]/g,'')) + '" class="pol-claim" onclick="event.stopPropagation()">📞 File a Claim - ' + escHtml(p.claimsPhone) + '</a>' : '';
-  return '<div class="pol" onclick="viewPolicy(\'' + escAttr(p.policyNumber) + '\')"><div class="pol-top">' + icon + '<span class="pol-nm">' + escHtml(p.policyType) + '</span><span class="pol-bg ' + s.cls + '">' + s.text + '</span></div>' + carrier + '<div class="pol-mt"><span><strong>' + escHtml(p.producerName || '') + '</strong> · ' + escHtml(p.policyNumber) + '</span><span>' + expLabel + expDate + '</span></div>' + claimBtn + '</div>';
+  var claimBtns = '';
+  if (p.claimsPhone || p.claimsUrl) {
+    claimBtns = '<div class="pol-actions" onclick="event.stopPropagation()">';
+    if (p.claimsPhone) claimBtns += '<a href="tel:' + escAttr(p.claimsPhone.replace(/[^0-9+]/g,'')) + '" class="pol-claim">📞 Call to File Claim</a>';
+    if (p.claimsUrl) claimBtns += '<a href="' + escAttr(p.claimsUrl) + '" target="_blank" rel="noopener" class="pol-claim pol-claim-web">🌐 File Claim Online</a>';
+    claimBtns += '</div>';
+  }
+  return '<div class="pol" onclick="viewPolicy(\'' + escAttr(p.policyNumber) + '\')"><div class="pol-top">' + icon + '<span class="pol-nm">' + escHtml(p.policyType) + '</span><span class="pol-bg ' + s.cls + '">' + s.text + '</span></div>' + carrier + '<div class="pol-mt"><span><strong>' + escHtml(p.producerName || '') + '</strong> · ' + escHtml(p.policyNumber) + '</span><span>' + expLabel + expDate + '</span></div>' + claimBtns + '</div>';
 }
 
 /* ══════════════════════════════════════════
