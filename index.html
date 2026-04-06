@@ -375,12 +375,12 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--dark);m
 
 <!-- ══════ CERT MODAL ══════ -->
 <div class="mo" id="certM" onclick="clBg(event,'certM')"><div class="mp" onclick="event.stopPropagation()"><div class="m-bar"></div>
-<div id="c1"><h2>Generate Certificate</h2><p class="ms">Select a commercial policy for your ACORD 25</p></div>
+<div id="c1"><h2>Generate Certificate</h2><p class="ms">Select the policies to include on your ACORD 25 (select one or more)</p></div>
 <div id="c2" style="display:none"><button class="m-bk" onclick="cBk()">← Back</button><h2>Certificate Holder</h2><p class="ms">Who needs proof of your coverage?</p>
 <div class="fg"><label>Certificate Holder Name</label><input placeholder="ABC Property Management LLC"></div>
 <div class="fg"><label>Address</label><input placeholder="123 Main Street"></div>
 <div class="fg"><label>City, State, ZIP</label><input placeholder="Stamford, CT 06901"></div>
-<div class="cprev" id="certPolicyPreview"><h4>Coverage — Auto-filled from policy</h4></div>
+<div class="cprev" id="certPolicyPreview"><h4>Selected Policies</h4></div>
 <button class="btn-s" onclick="genC()">Generate Certificate →</button></div>
 <div id="c3" style="display:none"><div class="suc"><div class="s-ic">🎉</div><h3>Certificate Generated!</h3><p>Your ACORD 25 is ready. A copy has been sent to your agent and saved to your document vault.</p>
 <button class="btn-s" style="margin-top:1rem" onclick="downloadCert()">Download PDF</button>
@@ -666,7 +666,7 @@ function clM(id) { document.getElementById(id).classList.remove('open'); documen
 function clBg(e, id) { if (e.target === e.currentTarget) clM(id); }
 
 function rstM(id) {
-  if (id === 'certM') { show('c1'); hide('c2'); hide('c3'); document.querySelectorAll('.cp').forEach(function(c) { c.classList.remove('sel'); }); window._selectedCertPolicy = null; }
+  if (id === 'certM') { show('c1'); hide('c2'); hide('c3'); document.querySelectorAll('.cp').forEach(function(c) { c.classList.remove('sel'); }); window._selectedCertPolicies = {}; window._certCommercial = []; }
   if (id === 'reqM') { show('r1'); ['rv','rd','ra','rc','ro','rsuc'].forEach(hide); }
   if (id === 'conM') { show('cf'); hide('cfsuc'); }
 }
@@ -958,43 +958,65 @@ async function openCertModal() {
   var c1 = document.getElementById('c1');
   var polData = window._policies;
   var commercial = (polData && polData.commercial || []).filter(function(p) { return p.status !== 'expired'; });
+  window._certCommercial = commercial;
+  window._selectedCertPolicies = {};
 
   if (!commercial.length) {
     c1.innerHTML = '<h2>Generate Certificate</h2><p class="ms">No commercial policies found for certificate generation.</p>';
     return;
   }
 
-  var html = '<h2>Generate Certificate</h2><p class="ms">Select a commercial policy for your ACORD 25</p>';
+  var html = '<h2>Generate Certificate</h2><p class="ms">Select the policies to include on your ACORD 25 (select one or more)</p>';
   commercial.forEach(function(p, i) {
     var expDate = p.renewalDate ? new Date(p.renewalDate).toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}) : '';
-    html += '<div class="cp" onclick="selC(this,' + i + ')"><h4>' + escHtml(p.policyType) + '</h4><p>' + escHtml(p.policyNumber) + ' · Exp ' + expDate + '</p></div>';
+    html += '<div class="cp" data-idx="' + i + '" onclick="toggleCertPolicy(this,' + i + ')"><h4>' + escHtml(p.policyType) + '</h4><p>' + escHtml(p.carrierName || '') + ' · ' + escHtml(p.policyNumber) + ' · Exp ' + expDate + '</p></div>';
   });
+  html += '<div style="margin-top:1rem;display:flex;gap:0.5rem"><button class="btn-s" id="certNextBtn" onclick="certNext()" disabled style="opacity:0.5">Continue →</button>';
+  html += '<button class="m-bk" style="margin:0" onclick="selectAllCert()">Select All</button></div>';
   c1.innerHTML = html;
 }
 
-function selC(el, idx) {
-  document.querySelectorAll('.cp').forEach(function(c) { c.classList.remove('sel'); });
-  el.classList.add('sel');
+function toggleCertPolicy(el, idx) {
+  if (window._selectedCertPolicies[idx]) {
+    delete window._selectedCertPolicies[idx];
+    el.classList.remove('sel');
+  } else {
+    window._selectedCertPolicies[idx] = true;
+    el.classList.add('sel');
+  }
+  var count = Object.keys(window._selectedCertPolicies).length;
+  var btn = document.getElementById('certNextBtn');
+  if (btn) { btn.disabled = !count; btn.style.opacity = count ? '1' : '0.5'; }
+}
 
-  var polData = window._policies;
-  var commercial = (polData && polData.commercial || []).filter(function(p) { return p.status !== 'expired'; });
-  window._selectedCertPolicy = commercial[idx] || null;
+function selectAllCert() {
+  var commercial = window._certCommercial || [];
+  window._selectedCertPolicies = {};
+  commercial.forEach(function(p, i) { window._selectedCertPolicies[i] = true; });
+  document.querySelectorAll('#c1 .cp').forEach(function(el) { el.classList.add('sel'); });
+  var btn = document.getElementById('certNextBtn');
+  if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+}
 
-  // Update the preview area if we have policy details
+function certNext() {
+  var indices = Object.keys(window._selectedCertPolicies);
+  if (!indices.length) return;
+  var commercial = window._certCommercial || [];
   var preview = document.getElementById('certPolicyPreview');
-  if (window._selectedCertPolicy && preview) {
-    var p = window._selectedCertPolicy;
-    var effDate = p.effectiveDate ? new Date(p.effectiveDate).toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}) : '';
-    var expDate = p.renewalDate ? new Date(p.renewalDate).toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}) : '';
-    var prevHtml = '<h4>Coverage — Auto-filled from policy</h4>';
-    if (p.producerName) prevHtml += '<div class="cf"><span class="cfl">Carrier</span><span class="cfv">' + escHtml(p.producerName) + '</span></div>';
-    prevHtml += '<div class="cf"><span class="cfl">Policy #</span><span class="cfv">' + escHtml(p.policyNumber) + '</span></div>';
-    if (effDate || expDate) prevHtml += '<div class="cf"><span class="cfl">Effective</span><span class="cfv">' + effDate + ' — ' + expDate + '</span></div>';
+  if (preview) {
+    var prevHtml = '<h4>Selected Policies</h4>';
+    indices.forEach(function(i) {
+      var p = commercial[i];
+      if (!p) return;
+      var expDate = p.renewalDate ? new Date(p.renewalDate).toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}) : '';
+      prevHtml += '<div class="cf"><span class="cfl">' + escHtml(p.policyType) + '</span><span class="cfv">' + escHtml(p.carrierName || '') + ' · ' + escHtml(p.policyNumber) + (expDate ? ' · Exp ' + expDate : '') + '</span></div>';
+    });
     preview.innerHTML = prevHtml;
   }
-
   setTimeout(function() { hide('c1'); show('c2'); }, 120);
 }
+
+function selC(el, idx) { toggleCertPolicy(el, idx); }
 
 function cBk() { hide('c2'); show('c1'); }
 
@@ -1008,8 +1030,10 @@ async function genC() {
 
   if (!holderName) return alert('Certificate holder name is required');
 
-  var selectedPolicy = window._selectedCertPolicy;
-  if (!selectedPolicy || !selectedPolicy.policyId) return alert('Please select a policy first');
+  var indices = Object.keys(window._selectedCertPolicies || {});
+  var commercial = window._certCommercial || [];
+  var selectedPolicies = indices.map(function(i) { return commercial[i]; }).filter(function(p) { return p && p.policyId; });
+  if (!selectedPolicies.length) return alert('Please select at least one policy');
 
   // Parse city, state, zip
   var parts = (cityStateZip || '').split(',').map(function(s) { return s.trim(); });
@@ -1025,7 +1049,7 @@ async function genC() {
     var result = await api('/certs/generate', {
       method: 'POST',
       body: {
-        policyId: selectedPolicy.policyId,
+        policyIds: selectedPolicies.map(function(p) { return p.policyId; }),
         certHolder: { name: holderName, address: address, city: city, state: state, zip: zip }
       }
     });
