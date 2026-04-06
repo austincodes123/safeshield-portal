@@ -336,7 +336,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--dark);m
     <div class="sec">
       <div class="sec-lbl fi f2">What do you need?</div>
       <div class="act-grid">
-        <div class="act fi f2" onclick="openCertModal()"><div class="act-ic ig">📋</div><h3>Get a Certificate</h3><p>ACORD 25 — instant PDF</p></div>
+        <div class="act fi f2" id="certAction" onclick="openCertModal()" style="display:none"><div class="act-ic ig">📋</div><h3>Get a Certificate</h3><p>ACORD 25 — instant PDF</p></div>
         <div class="act fi f3" onclick="openM('reqM')"><div class="act-ic ib">✏️</div><h3>Request a Change</h3><p>Vehicle, driver, address</p></div>
         <div class="act fi f3" onclick="showPg('docs')"><div class="act-ic igr">📁</div><h3>My Documents</h3><p>Dec pages, certs, ID cards</p></div>
         <div class="act fi f4" onclick="openM('conM')"><div class="act-ic ig">💬</div><h3>Message Agent</h3><p>Quick question for your agent</p></div>
@@ -596,6 +596,9 @@ async function loadDashboard() {
     const polData = await api('/policies');
     if (polData && !polData.error) {
       window._policies = polData;
+      // Show certificate button only if client has commercial policies
+      var certBtn = document.getElementById('certAction');
+      if (certBtn && polData.commercial && polData.commercial.length) certBtn.style.display = '';
       // Update pills
       const allPols = polData.all || [];
       var currentPols = (polData.commercial || []).concat(polData.personal || []);
@@ -805,7 +808,7 @@ function viewPolicy(policyNumber) {
   html += '</div>';
 
   html += '<div style="display:flex;gap:0.5rem;margin-top:0.75rem">';
-  html += '<button class="btn-s" style="flex:1" onclick="clM(\'polD\');openCertModal()">Get Certificate</button>';
+  if (p.isCommercial) html += '<button class="btn-s" style="flex:1" onclick="clM(\'polD\');openCertModal()">Get Certificate</button>';
   html += '<button class="btn-s" style="flex:1;background:var(--dark)" onclick="clM(\'polD\');openM(\'reqM\')">Request Change</button>';
   html += '</div>';
 
