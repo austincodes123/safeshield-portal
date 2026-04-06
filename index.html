@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Client Portal | Safeshield Insurance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;900&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--navy:#004B89;--gold:#FFA300;--gold-hover:#e89200;--dark:#0a1628;--off-white:#FAFAF8;
+--gold-dim:rgba(255,163,0,0.07);--gold-dim2:rgba(255,163,0,0.13);
+--white:#ffffff;--gray-50:#f4f5f7;--gray-100:#e6e9ed;--gray-200:#d0d5dd;--gray-300:#a0a8b4;--gray-400:#6b7585;--gray-500:#454f5b;--gray-600:#2d3643;
+--green:#22c55e;--green-dim:rgba(34,197,94,0.08);--blue:#2563eb;--blue-dim:rgba(37,99,235,0.08);
+--radius:12px;--radius-sm:8px;--radius-xs:6px;
+--shadow-sm:0 1px 2px rgba(0,0,0,0.04);--shadow:0 2px 8px rgba(0,0,0,0.07);--shadow-lg:0 8px 24px rgba(0,0,0,0.1);
+}
+html{font-size:16px;scroll-behavior:smooth}
+body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--dark);min-height:100vh;-webkit-font-smoothing:antialiased}
+
+/* ══════════════════════════════════════════
+   SITE NAV — matches gosafeshield.com exactly
+   ══════════════════════════════════════════ */
+.topbar{background:var(--dark);padding:0.4rem 1.25rem;display:flex;align-items:center;justify-content:center;gap:1.5rem;font-size:0.72rem;color:rgba(250,250,248,0.6)}
+.topbar span{letter-spacing:0.5px}
+.topbar a{color:var(--gold);text-decoration:none;font-weight:600}
+
+.site-nav{position:sticky;top:0;z-index:500;background:var(--white);border-bottom:1px solid rgba(0,0,0,0.06);padding:0 1.25rem;height:60px;display:flex;align-items:center}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:1200px;margin:0 auto}
+.nav-logo{font-family:'Outfit',sans-serif;font-weight:800;font-size:0.78rem;letter-spacing:3px;color:var(--dark);text-decoration:none}
+.nav-logo .nl-accent{color:var(--gold)}
+.nav-links{display:none;gap:1.5rem;align-items:center}
+.nav-links a{color:var(--gray-500);text-decoration:none;font-size:0.82rem;font-weight:500;transition:color 0.15s}
+.nav-links a:hover{color:var(--dark)}
+.nav-links a.n-active{color:var(--gold);font-weight:600}
+.nav-cta{background:var(--gold);color:var(--white);font-weight:700;font-size:0.72rem;padding:0.45rem 1rem;border-radius:100px;text-decoration:none;letter-spacing:0.5px;transition:background 0.15s}
+.nav-cta:hover{background:var(--gold-hover)}
+.nav-ham{background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--dark);display:flex}
+@media(min-width:768px){
+.nav-links{display:flex}
+.nav-ham{display:none}
+.topbar{gap:2.5rem}
+}
+
+/* ══════════════════════════════════════════
+   LOGIN VIEW
+   ══════════════════════════════════════════ */
+.login-view{min-height:calc(100vh - 96px);display:flex;align-items:center;justify-content:center;padding:2rem 1.25rem;background:var(--off-white)}
+.login-wrap{width:100%;max-width:400px}
+.login-head{text-align:center;margin-bottom:2rem}
+.login-head p.l-eyebrow{font-size:0.7rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:0.5rem}
+.login-head h1{font-family:'Playfair Display',serif;font-size:1.75rem;font-weight:700;color:var(--dark);margin-bottom:0.5rem}
+.login-head p.l-sub{color:var(--gray-400);font-size:0.88rem;line-height:1.6}
+.login-card{background:var(--white);border:1px solid var(--gray-100);border-radius:var(--radius);padding:1.75rem;box-shadow:var(--shadow)}
+.fg{margin-bottom:1rem}
+.fg label{display:block;font-size:0.72rem;font-weight:600;color:var(--gray-400);letter-spacing:0.5px;margin-bottom:0.35rem}
+.fg input,.fg textarea,.fg select{width:100%;padding:0.7rem 0.85rem;border:1px solid var(--gray-200);border-radius:var(--radius-xs);font-size:0.88rem;font-family:'Outfit',sans-serif;color:var(--dark);transition:all 0.15s;background:var(--white)}
+.fg input:focus,.fg textarea:focus,.fg select:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-dim)}
+.fg input::placeholder{color:var(--gray-300)}
+.fg textarea{resize:vertical;min-height:72px}
+.btn{width:100%;padding:0.75rem;background:var(--gold);color:var(--white);font-weight:700;font-size:0.88rem;border:none;border-radius:100px;cursor:pointer;transition:all 0.15s;font-family:'Outfit',sans-serif}
+.btn:hover{background:var(--gold-hover)}
+.btn:active{transform:scale(0.98)}
+.login-note{text-align:center;margin-top:1.25rem;color:var(--gray-400);font-size:0.75rem;line-height:1.6}
+
+/* ══════════════════════════════════════════
+   MAGIC LINK
+   ══════════════════════════════════════════ */
+.magic-view{min-height:calc(100vh - 96px);display:none;align-items:center;justify-content:center;padding:2rem 1.25rem;background:var(--off-white);text-align:center}
+.magic-view .m-icon{font-size:3rem;margin-bottom:1rem}
+.magic-view h2{font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--dark);margin-bottom:0.5rem}
+.magic-view p{color:var(--gray-400);font-size:0.88rem;line-height:1.6;max-width:320px;margin:0 auto 1.5rem}
+.magic-view .email-hl{color:var(--gold);font-weight:600}
+.btn-o{padding:0.65rem 1.5rem;background:var(--white);color:var(--gold);border:2px solid var(--gold);border-radius:100px;cursor:pointer;font-weight:700;font-size:0.82rem;font-family:'Outfit',sans-serif;transition:all 0.15s}
+.btn-o:hover{background:var(--gold);color:var(--white)}
+
+/* ══════════════════════════════════════════
+   PORTAL
+   ══════════════════════════════════════════ */
+.portal{display:none;padding-bottom:4.5rem}
+.portal.active{display:block}
+
+/* Portal Header */
+.p-header{background:var(--dark);padding:1.35rem 1.25rem 1.15rem;position:relative;overflow:hidden}
+.p-header::before{content:'';position:absolute;top:-60%;right:-20%;width:400px;height:400px;background:radial-gradient(circle,rgba(0,75,137,0.2) 0%,rgba(255,163,0,0.06) 40%,transparent 70%);pointer-events:none}
+.p-header-inner{max-width:1200px;margin:0 auto;position:relative;z-index:1}
+.ph-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem}
+.ph-badge{font-size:0.6rem;color:rgba(250,250,248,0.4);letter-spacing:1.5px;font-weight:600;text-transform:uppercase}
+.ph-av{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,163,0,0.5);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:0.7rem;color:var(--gold);cursor:pointer}
+.ph-greet h2{font-family:'Playfair Display',serif;color:var(--off-white);font-size:1.15rem;font-weight:500;line-height:1.3}
+.ph-greet p{color:rgba(250,250,248,0.45);font-size:0.75rem;margin-top:0.1rem}
+
+/* Coverage Snapshot */
+.snap{margin:0.85rem 1.25rem 0;background:var(--white);border:1px solid var(--gray-100);border-radius:var(--radius);padding:0.85rem 1rem;display:flex;align-items:center;gap:0.8rem;box-shadow:var(--shadow-sm)}
+.snap-ic{width:42px;height:42px;border-radius:50%;background:var(--green-dim);display:flex;align-items:center;justify-content:center;font-size:1.15rem;flex-shrink:0}
+.snap-info h3{font-size:0.82rem;font-weight:600;color:var(--dark)}
+.snap-info p{font-size:0.73rem;color:var(--gray-400);margin-top:0.08rem}
+.snap-pills{display:flex;flex-wrap:wrap;gap:0.25rem;margin-top:0.35rem}
+.snap-pill{background:var(--gray-50);color:var(--gray-500);font-size:0.6rem;padding:0.15rem 0.45rem;border-radius:20px;font-weight:500;border:1px solid var(--gray-100)}
+
+/* Actions */
+.sec{padding:0 1.25rem;max-width:1200px;margin:0 auto}
+.sec-lbl{font-size:0.65rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gray-300);margin:1.15rem 0 0.6rem}
+.act-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.6rem}
+.act{background:var(--white);border-radius:var(--radius);padding:0.95rem;cursor:pointer;transition:all 0.15s;border:1px solid var(--gray-100)}
+.act:hover{border-color:var(--gold);box-shadow:var(--shadow)}
+.act:active{transform:scale(0.97)}
+.act-ic{width:36px;height:36px;border-radius:var(--radius-xs);display:flex;align-items:center;justify-content:center;font-size:1.05rem;margin-bottom:0.45rem}
+.act-ic.ig{background:var(--gold-dim2)}
+.act-ic.ib{background:var(--blue-dim)}
+.act-ic.igr{background:var(--green-dim)}
+.act h3{font-size:0.8rem;font-weight:600;color:var(--dark);margin-bottom:0.1rem}
+.act p{font-size:0.68rem;color:var(--gray-400);line-height:1.35}
+
+/* Team */
+.team{margin:0 1.25rem 1rem;background:var(--white);border:1px solid var(--gray-100);border-radius:var(--radius);padding:0.9rem;display:flex;align-items:center;gap:0.8rem;box-shadow:var(--shadow-sm)}
+.t-av{width:42px;height:42px;border-radius:50%;background:var(--dark);display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:var(--off-white);font-weight:600;flex-shrink:0}
+.t-info h3{font-size:0.82rem;font-weight:600;color:var(--dark)}
+.t-info p{font-size:0.73rem;color:var(--gray-400)}
+.t-links{display:flex;gap:0.7rem;margin-top:0.25rem}
+.t-links a{font-size:0.7rem;color:var(--gold);text-decoration:none;font-weight:600}
+.t-links a:hover{text-decoration:underline}
+
+/* Bottom Nav */
+.bnav{position:fixed;bottom:0;left:0;right:0;background:var(--white);border-top:1px solid var(--gray-100);display:flex;justify-content:space-around;padding:0.4rem 0 calc(0.4rem + env(safe-area-inset-bottom));z-index:400}
+.bn{display:flex;flex-direction:column;align-items:center;gap:0.12rem;cursor:pointer;padding:0.3rem 0.6rem;border-radius:var(--radius-xs);transition:all 0.15s;-webkit-tap-highlight-color:transparent}
+.bn .bi{font-size:1.15rem}
+.bn .bl{font-size:0.55rem;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;color:var(--gray-400)}
+.bn.on{background:var(--gold-dim2)}
+.bn.on .bl{color:var(--gold)}
+
+/* Pages */
+.pg{display:none;padding:0.5rem 1.25rem 5rem;max-width:1200px;margin:0 auto}
+.pg.on{display:block}
+.pg-bk{background:none;border:none;color:var(--gray-400);font-size:0.8rem;cursor:pointer;display:flex;align-items:center;gap:0.25rem;margin-bottom:0.65rem;font-family:'Outfit',sans-serif;padding:0.35rem 0}
+.pg-t{font-family:'Playfair Display',serif;font-size:1.25rem;color:var(--dark);margin-bottom:0.15rem}
+.pg-s{color:var(--gray-400);font-size:0.8rem;margin-bottom:1rem}
+.pg-g{font-size:0.65rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray-300);margin:0.9rem 0 0.45rem}
+
+/* Policy Cards */
+.pol{background:var(--white);border:1px solid var(--gray-100);border-radius:var(--radius-sm);padding:0.95rem;margin-bottom:0.55rem;cursor:pointer;transition:all 0.15s;box-shadow:var(--shadow-sm)}
+.pol:hover{border-color:var(--gold)}
+.pol-top{display:flex;justify-content:space-between;align-items:flex-start}
+.pol-nm{font-weight:600;font-size:0.82rem;color:var(--dark);flex:1;padding-right:0.5rem}
+.pol-bg{font-size:0.58rem;font-weight:700;padding:0.15rem 0.45rem;border-radius:20px;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;flex-shrink:0}
+.pol-bg.ba{background:var(--green-dim);color:var(--green)}
+.pol-bg.be{background:var(--gold-dim2);color:var(--gold-hover)}
+.pol-mt{display:flex;flex-direction:column;gap:0.2rem;margin-top:0.4rem}
+.pol-mt span{font-size:0.73rem;color:var(--gray-400)}
+.pol-mt strong{color:var(--gray-500);font-weight:600}
+
+/* Doc Items */
+.doc{display:flex;align-items:center;gap:0.7rem;padding:0.75rem;background:var(--white);border:1px solid var(--gray-100);border-radius:var(--radius-sm);margin-bottom:0.4rem;cursor:pointer;transition:all 0.15s;box-shadow:var(--shadow-sm)}
+.doc:hover{border-color:var(--gold)}
+.d-ic{width:34px;height:34px;border-radius:var(--radius-xs);display:flex;align-items:center;justify-content:center;font-size:0.95rem;flex-shrink:0}
+.d-ic.dp{background:rgba(220,38,38,0.07)}.d-ic.dc{background:var(--gold-dim2)}.d-ic.di{background:var(--blue-dim)}
+.doc h4{font-size:0.8rem;font-weight:600;color:var(--dark)}
+.doc p{font-size:0.68rem;color:var(--gray-400);margin-top:0.08rem}
+.doc-dl{margin-left:auto;font-size:0.95rem;color:var(--gray-300);flex-shrink:0}
+
+/* Request Items */
+.req{background:var(--white);border:1px solid var(--gray-100);border-radius:var(--radius-sm);padding:0.85rem;margin-bottom:0.45rem;box-shadow:var(--shadow-sm)}
+.req-top{display:flex;justify-content:space-between;align-items:center}
+.req h4{font-size:0.8rem;font-weight:600;color:var(--dark)}
+.req-bg{font-size:0.58rem;font-weight:700;padding:0.15rem 0.4rem;border-radius:20px;text-transform:uppercase;letter-spacing:0.5px}
+.req-bg.rp{background:var(--gold-dim2);color:var(--gold-hover)}
+.req-bg.ri{background:var(--blue-dim);color:var(--blue)}
+.req-bg.rd{background:var(--green-dim);color:var(--green)}
+.req p{font-size:0.7rem;color:var(--gray-400);margin-top:0.2rem}
+
+/* ══════════════════════════════════════════
+   MODALS
+   ══════════════════════════════════════════ */
+.mo{display:none;position:fixed;inset:0;background:rgba(10,22,40,0.45);z-index:600;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+.mo.open{display:flex;align-items:flex-end;justify-content:center}
+.mp{background:var(--white);border-radius:var(--radius) var(--radius) 0 0;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;padding:1.15rem 1.25rem 1.75rem;animation:su 0.25s ease}
+@keyframes su{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.m-bar{width:30px;height:3px;background:var(--gray-200);border-radius:3px;margin:0 auto 1rem}
+.mp h2{font-family:'Playfair Display',serif;font-size:1.15rem;color:var(--dark);margin-bottom:0.3rem}
+.mp .ms{color:var(--gray-400);font-size:0.8rem;margin-bottom:1.1rem;line-height:1.5}
+.m-bk{background:none;border:none;color:var(--gray-400);font-size:0.8rem;cursor:pointer;display:flex;align-items:center;gap:0.25rem;margin-bottom:0.75rem;font-family:'Outfit',sans-serif}
+
+/* Request Types */
+.rt{background:var(--off-white);border:1px solid var(--gray-100);border-radius:var(--radius-sm);padding:0.8rem;margin-bottom:0.45rem;cursor:pointer;display:flex;align-items:center;gap:0.7rem;transition:all 0.15s}
+.rt:hover{border-color:var(--gold);background:var(--gold-dim)}
+.rt-ic{font-size:1.15rem;width:34px;text-align:center;flex-shrink:0}
+.rt h4{font-size:0.82rem;font-weight:600;color:var(--dark)}
+.rt p{font-size:0.7rem;color:var(--gray-400);margin-top:0.03rem}
+
+/* Cert */
+.cp{background:var(--off-white);border:1px solid var(--gray-100);border-radius:var(--radius-sm);padding:0.8rem;margin-bottom:0.45rem;cursor:pointer;transition:all 0.15s}
+.cp:hover{border-color:var(--gold)}
+.cp.sel{border-color:var(--gold);background:var(--gold-dim)}
+.cp h4{font-size:0.82rem;font-weight:600;color:var(--dark)}
+.cp p{font-size:0.7rem;color:var(--gray-400);margin-top:0.12rem}
+.cprev{background:var(--off-white);border:1px solid var(--gray-100);border-radius:var(--radius-sm);padding:0.9rem;margin:0.75rem 0}
+.cprev h4{font-size:0.65rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gray-300);margin-bottom:0.5rem}
+.cf{display:flex;justify-content:space-between;padding:0.3rem 0;border-bottom:1px solid var(--gray-100);font-size:0.75rem}
+.cf:last-child{border:none}
+.cf .cfl{color:var(--gray-400)}
+.cf .cfv{color:var(--dark);font-weight:600}
+
+.btn-s{width:100%;padding:0.75rem;background:var(--gold);color:var(--white);font-weight:700;font-size:0.85rem;border:none;border-radius:100px;cursor:pointer;transition:all 0.15s;font-family:'Outfit',sans-serif;margin-top:0.3rem}
+.btn-s:hover{background:var(--gold-hover)}
+
+/* Success */
+.suc{text-align:center;padding:1.5rem 0.5rem}
+.suc .s-ic{font-size:2.5rem;margin-bottom:0.75rem}
+.suc h3{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--dark);margin-bottom:0.35rem}
+.suc p{color:var(--gray-400);font-size:0.8rem;line-height:1.5}
+
+/* ══════════════════════════════════════════
+   FOOTER — matches gosafeshield.com
+   ══════════════════════════════════════════ */
+.site-footer{background:var(--dark);color:rgba(250,250,248,0.5);padding:2.5rem 1.25rem 1.5rem;font-size:0.75rem;line-height:1.7}
+.f-inner{max-width:1200px;margin:0 auto}
+.f-brand{font-family:'Outfit',sans-serif;font-weight:800;font-size:0.75rem;letter-spacing:3px;color:var(--off-white);margin-bottom:0.65rem}
+.f-brand .fa{color:var(--gold)}
+.f-desc{color:rgba(250,250,248,0.4);font-size:0.72rem;line-height:1.6;margin-bottom:1.25rem;max-width:360px}
+.f-links{display:flex;flex-wrap:wrap;gap:1.25rem;margin-bottom:1.25rem}
+.f-links a{color:rgba(250,250,248,0.4);text-decoration:none;font-size:0.72rem;transition:color 0.15s}
+.f-links a:hover{color:var(--off-white)}
+.f-bot{border-top:1px solid rgba(255,255,255,0.06);padding-top:0.85rem;color:rgba(250,250,248,0.3);font-size:0.65rem;display:flex;justify-content:space-between;flex-wrap:wrap;gap:0.5rem}
+
+/* Animations */
+@keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.fi{animation:fi 0.3s ease both}
+.f1{animation-delay:0.03s}.f2{animation-delay:0.06s}.f3{animation-delay:0.09s}.f4{animation-delay:0.12s}.f5{animation-delay:0.15s}
+
+@media(min-width:480px){.mp{border-radius:var(--radius)}.bnav{max-width:480px;left:50%;transform:translateX(-50%)}}
+@media(min-width:768px){.act-grid{grid-template-columns:repeat(4,1fr)}.p-header,.sec{padding-left:2rem;padding-right:2rem}.snap,.team{margin-left:2rem;margin-right:2rem}.pg{padding-left:2rem;padding-right:2rem}}
+</style>
+</head>
+<body>
+
+<!-- ══════ TOP BAR ══════ -->
+<div class="topbar">
+  <span>Serving CT, NY, NJ, PA, DE</span>
+  <a href="tel:2032042555">☎ (203) 204-2555</a>
+  <a href="mailto:info@gosafeshield.com">info@gosafeshield.com</a>
+</div>
+
+<!-- ══════ SITE NAV ══════ -->
+<nav class="site-nav">
+  <div class="nav-inner">
+    <a href="https://gosafeshield.com" class="nav-logo">SAFESHIELD <span class="nl-accent">INSURANCE</span></a>
+    <div class="nav-links">
+      <a href="https://gosafeshield.com/about-us">About</a>
+      <a href="https://gosafeshield.com/coverages">Coverages</a>
+      <a href="https://gosafeshield.com/blog">Blog</a>
+      <a href="#" class="n-active">Client Portal</a>
+      <a href="https://gosafeshield.com/contact-us">Contact</a>
+      <a href="https://app.usecanopy.com/c/safeshield-insurance-go" class="nav-cta">Get a Quote</a>
+    </div>
+    <button class="nav-ham" onclick="this.nextElementSibling.classList.toggle('show')" aria-label="Menu">☰</button>
+    <div class="nav-mobile">
+      <a href="https://gosafeshield.com/about-us">About</a>
+      <a href="https://gosafeshield.com/coverages">Coverages</a>
+      <a href="https://gosafeshield.com/blog">Blog</a>
+      <a href="#" class="n-active">Client Portal</a>
+      <a href="https://gosafeshield.com/contact-us">Contact</a>
+      <a href="https://app.usecanopy.com/c/safeshield-insurance-go">Get a Quote →</a>
+    </div>
+  </div>
+</nav>
+<style>
+.nav-mobile{display:none;position:absolute;top:60px;left:0;right:0;background:var(--white);border-bottom:1px solid var(--gray-100);padding:1rem 1.25rem;flex-direction:column;gap:0.75rem;box-shadow:var(--shadow-lg);z-index:499}
+.nav-mobile.show{display:flex}
+.nav-mobile a{color:var(--gray-500);text-decoration:none;font-size:0.9rem;font-weight:500;padding:0.35rem 0}
+.nav-mobile a.n-active{color:var(--gold);font-weight:600}
+@media(min-width:768px){.nav-mobile,.nav-mobile.show{display:none}}
+</style>
+
+<!-- ══════ LOGIN ══════ -->
+<div class="login-view" id="loginView">
+  <div class="login-wrap">
+    <div class="login-head">
+      <p class="l-eyebrow">Client Portal</p>
+      <h1>Your Insurance Hub</h1>
+      <p class="l-sub">Access your policies, certificates, and documents — all in one place. No password needed.</p>
+    </div>
+    <div class="login-card">
+      <div class="fg"><label>Email Address</label><input type="email" id="loginEmail" placeholder="john@example.com" value=""></div>
+      <div class="fg"><label>Last Name</label><input type="text" id="loginName" placeholder="Last name" value=""></div>
+      <button class="btn" onclick="sendMagicLink()">Send Secure Link →</button>
+    </div>
+    <p class="login-note">We'll email you a secure login link.<br>It expires in 30 minutes — no password required.</p>
+  </div>
+</div>
+
+<!-- ══════ MAGIC LINK ══════ -->
+<div class="magic-view" id="magicView">
+  <div>
+    <div class="m-icon">✉️</div>
+    <h2>Check Your Email</h2>
+    <p>We sent a secure link to<br><span class="email-hl" id="magicEmail"></span><br><br>Click it to access your portal.</p>
+  </div>
+</div>
+
+<!-- ══════ PORTAL ══════ -->
+<div class="portal" id="portal">
+  <div class="p-header">
+    <div class="p-header-inner">
+      <div class="ph-row">
+        <span class="ph-badge">Client Portal</span>
+        <div class="ph-av" onclick="if(confirm('Sign out of the portal?'))logout()"></div>
+      </div>
+      <div class="ph-greet">
+        <h2>Welcome back</h2>
+        <p></p>
+      </div>
+    </div>
+  </div>
+
+  <div id="homeView">
+    <div class="snap fi f1">
+      <div class="snap-ic">✅</div>
+      <div class="snap-info">
+        <h3>You're Well Protected</h3>
+        <p>All policies active and in good standing</p>
+        <div class="snap-pills"></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-lbl fi f2">What do you need?</div>
+      <div class="act-grid">
+        <div class="act fi f2" onclick="openCertModal()"><div class="act-ic ig">📋</div><h3>Get a Certificate</h3><p>ACORD 25 — instant PDF</p></div>
+        <div class="act fi f3" onclick="openM('reqM')"><div class="act-ic ib">✏️</div><h3>Request a Change</h3><p>Vehicle, driver, address</p></div>
+        <div class="act fi f3" onclick="showPg('docs')"><div class="act-ic igr">📁</div><h3>My Documents</h3><p>Dec pages, certs, ID cards</p></div>
+        <div class="act fi f4" onclick="openM('conM')"><div class="act-ic ig">💬</div><h3>Message Agent</h3><p>Quick question for your agent</p></div>
+      </div>
+    </div>
+
+    <div class="sec"><div class="sec-lbl fi f4">Your Team</div></div>
+    <div class="team fi f5">
+      <div class="t-av" id="teamAv"></div>
+      <div class="t-info">
+        <h3 id="teamName">Your Agent</h3>
+        <p>Your dedicated agent</p>
+        <div class="t-links" id="teamLinks"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Policies -->
+  <div class="pg" id="polPg"></div>
+
+  <!-- Documents -->
+  <div class="pg" id="docsPg"></div>
+
+  <!-- Requests -->
+  <div class="pg" id="reqPg"></div>
+
+  <!-- Bottom Nav -->
+  <div class="bnav">
+    <div class="bn on" onclick="goHome()" id="nH"><span class="bi">🏠</span><span class="bl">Home</span></div>
+    <div class="bn" onclick="showPg('pol')" id="nP"><span class="bi">📑</span><span class="bl">Policies</span></div>
+    <div class="bn" onclick="showPg('docs')" id="nD"><span class="bi">📁</span><span class="bl">Docs</span></div>
+    <div class="bn" onclick="showPg('req')" id="nR"><span class="bi">📝</span><span class="bl">Requests</span></div>
+  </div>
+</div>
+
+<!-- ══════ CERT MODAL ══════ -->
+<div class="mo" id="certM" onclick="clBg(event,'certM')"><div class="mp" onclick="event.stopPropagation()"><div class="m-bar"></div>
+<div id="c1"><h2>Generate Certificate</h2><p class="ms">Select a commercial policy for your ACORD 25</p></div>
+<div id="c2" style="display:none"><button class="m-bk" onclick="cBk()">← Back</button><h2>Certificate Holder</h2><p class="ms">Who needs proof of your coverage?</p>
+<div class="fg"><label>Certificate Holder Name</label><input placeholder="ABC Property Management LLC"></div>
+<div class="fg"><label>Address</label><input placeholder="123 Main Street"></div>
+<div class="fg"><label>City, State, ZIP</label><input placeholder="Stamford, CT 06901"></div>
+<div class="cprev" id="certPolicyPreview"><h4>Coverage — Auto-filled from policy</h4></div>
+<button class="btn-s" onclick="genC()">Generate Certificate →</button></div>
+<div id="c3" style="display:none"><div class="suc"><div class="s-ic">🎉</div><h3>Certificate Generated!</h3><p>Your ACORD 25 is ready. A copy has been sent to your agent and saved to your document vault.</p>
+<button class="btn-s" style="margin-top:1rem" onclick="downloadCert()">Download PDF</button>
+<button class="m-bk" style="justify-content:center;margin-top:0.65rem" onclick="clM('certM')">Close</button></div></div>
+</div></div>
+
+<!-- ══════ REQUEST MODAL ══════ -->
+<div class="mo" id="reqM" onclick="clBg(event,'reqM')"><div class="mp" onclick="event.stopPropagation()"><div class="m-bar"></div>
+<div id="r1"><h2>What do you need?</h2><p class="ms">Select a request type and we'll guide you through it</p>
+<div class="rt" onclick="selR('rv')"><div class="rt-ic">🚗</div><div><h4>Add a Vehicle</h4><p>New car, truck, or commercial vehicle</p></div></div>
+<div class="rt" onclick="selR('rd')"><div class="rt-ic">👤</div><div><h4>Add a Driver</h4><p>New household or employee driver</p></div></div>
+<div class="rt" onclick="selR('ra')"><div class="rt-ic">📍</div><div><h4>Address Change</h4><p>Update your mailing or property address</p></div></div>
+<div class="rt" onclick="selR('rc')"><div class="rt-ic">🛡️</div><div><h4>Coverage Question</h4><p>Change limits, deductibles, or coverages</p></div></div>
+<div class="rt" onclick="selR('ro')"><div class="rt-ic">💬</div><div><h4>Other</h4><p>Something else not listed above</p></div></div></div>
+<div id="rv" style="display:none"><button class="m-bk" onclick="rBk()">← Back</button><h2>Add a Vehicle</h2><p class="ms">We'll get this added to your auto policy</p>
+<div class="fg"><label>Year</label><input placeholder="2026"></div><div class="fg"><label>Make</label><input placeholder="Rivian"></div><div class="fg"><label>Model</label><input placeholder="R1S"></div><div class="fg"><label>VIN (required)</label><input placeholder="7FCTGAAA5PN000123"></div>
+<div class="fg"><label>Anything else?</label><textarea placeholder="Financing through Chase, need full coverage..."></textarea></div>
+<label style="font-size:0.75rem;color:var(--gray-400);display:flex;align-items:center;gap:0.35rem;margin-bottom:0.75rem;cursor:pointer"><input type="file" style="display:none"><span style="color:var(--gold);font-weight:600">📎 Attach docs</span>(optional)</label>
+<button class="btn-s" onclick="subR()">Submit Request →</button></div>
+<div id="rd" style="display:none"><button class="m-bk" onclick="rBk()">← Back</button><h2>Add a Driver</h2><p class="ms">New driver for your auto policy</p>
+<div class="fg"><label>Full Name</label><input placeholder="Sarah Mitchell"></div><div class="fg"><label>Date of Birth</label><input type="date"></div><div class="fg"><label>License Number</label><input placeholder="CT-123456789"></div>
+<div class="fg"><label>Relationship</label><select><option>Spouse</option><option>Child</option><option>Employee</option><option>Other</option></select></div>
+<div class="fg"><label>Notes</label><textarea placeholder="Clean driving record..."></textarea></div>
+<button class="btn-s" onclick="subR()">Submit Request →</button></div>
+<div id="ra" style="display:none"><button class="m-bk" onclick="rBk()">← Back</button><h2>Address Change</h2><p class="ms">Which policies should be updated?</p>
+<div class="fg"><label>New Address</label><input placeholder="123 New Street"></div><div class="fg"><label>City, State, ZIP</label><input placeholder="Greenwich, CT 06830"></div>
+<div class="fg"><label>Effective Date</label><input type="date"></div>
+<div class="fg"><label>Update which policies?</label><select><option>All policies</option><option>Auto only</option><option>Homeowners only</option><option>Select specific</option></select></div>
+<button class="btn-s" onclick="subR()">Submit Request →</button></div>
+<div id="rc" style="display:none"><button class="m-bk" onclick="rBk()">← Back</button><h2>Coverage Question</h2><p class="ms">What would you like to change?</p>
+<div class="fg"><label>Which policy?</label><select id="rcPolicySelect"><option>Not sure</option></select></div>
+<div class="fg"><label>Details</label><textarea placeholder="I'd like to increase my umbrella coverage..."></textarea></div>
+<button class="btn-s" onclick="subR()">Submit Request →</button></div>
+<div id="ro" style="display:none"><button class="m-bk" onclick="rBk()">← Back</button><h2>Other Request</h2><p class="ms">Tell us what you need</p>
+<div class="fg"><label>Subject</label><input placeholder="Quick question about my policy..."></div>
+<div class="fg"><label>Details</label><textarea placeholder="Describe what you need..."></textarea></div>
+<label style="font-size:0.75rem;color:var(--gray-400);display:flex;align-items:center;gap:0.35rem;margin-bottom:0.75rem;cursor:pointer"><input type="file" style="display:none"><span style="color:var(--gold);font-weight:600">📎 Attach docs</span>(optional)</label>
+<button class="btn-s" onclick="subR()">Submit Request →</button></div>
+<div id="rsuc" style="display:none"><div class="suc"><div class="s-ic">✅</div><h3>Request Submitted!</h3><p>Your agent has been notified and will follow up shortly. Track status in your Requests tab.</p>
+<button class="btn-s" style="margin-top:1rem" onclick="clM('reqM')">Done</button></div></div>
+</div></div>
+
+<!-- ══════ CONTACT MODAL ══════ -->
+<div class="mo" id="conM" onclick="clBg(event,'conM')"><div class="mp" onclick="event.stopPropagation()"><div class="m-bar"></div>
+<div id="cf"><h2>Message Your Agent</h2><p class="ms">Send a quick message to your agent</p>
+<div class="fg"><label>Topic</label><select><option>Billing question</option><option>Coverage question</option><option>Document request</option><option>Other</option></select></div>
+<div class="fg"><label>Message</label><textarea placeholder="Hey, quick question about..." rows="4"></textarea></div>
+<div class="fg"><label>Best time to reach you (optional)</label><input placeholder="Mornings before 10am"></div>
+<button class="btn-s" onclick="sndMsg()">Send Message →</button></div>
+<div id="cfsuc" style="display:none"><div class="suc"><div class="s-ic">💬</div><h3>Message Sent!</h3><p>Your agent will get back to you shortly.</p>
+<button class="btn-s" style="margin-top:1rem" onclick="clM('conM')">Done</button></div></div>
+</div></div>
+
+<!-- ══════ POLICY DETAIL MODAL ══════ -->
+<div class="mo" id="polD" onclick="clBg(event,'polD')"><div class="mp" onclick="event.stopPropagation()"><div class="m-bar"></div>
+<div id="polDContent">
+<h2>Policy Details</h2><p class="ms">Loading...</p>
+</div>
+</div></div>
+
+<!-- ══════ FOOTER ══════ -->
+<footer class="site-footer" id="siteFooter">
+  <div class="f-inner">
+    <div class="f-brand">SAFESHIELD <span class="fa">INSURANCE</span></div>
+    <p class="f-desc">Independent insurance brokerage serving CT, NY, NJ, PA, and DE. 73+ carriers. 300+ five-star reviews. We work for you, not the insurance company.</p>
+    <div class="f-links">
+      <a href="https://gosafeshield.com/about-us">About Us</a>
+      <a href="https://gosafeshield.com/coverages">Coverages</a>
+      <a href="https://gosafeshield.com/blog">Blog</a>
+      <a href="https://gosafeshield.com/contact-us">Contact</a>
+      <a href="https://gosafeshield.com/privacy-policy">Privacy Policy</a>
+    </div>
+    <div class="f-bot">
+      <span>© 2026 Safeshield Insurance LLC. All rights reserved.</span>
+      <span>(203) 204-2555 · info@gosafeshield.com</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ══════════════════════════════════════════
+   CONSTANTS & STATE
+   ══════════════════════════════════════════ */
+const API = 'https://casey.gosafeshield.com/api/portal';
+let jwt = sessionStorage.getItem('portalToken');
+
+/* ══════════════════════════════════════════
+   UTILITIES
+   ══════════════════════════════════════════ */
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escAttr(s) { return String(s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
+function show(id) { document.getElementById(id).style.display = 'block'; }
+function hide(id) { document.getElementById(id).style.display = 'none'; }
+
+/* ══════════════════════════════════════════
+   API HELPER
+   ══════════════════════════════════════════ */
+async function api(path, opts = {}) {
+  const headers = { 'Authorization': 'Bearer ' + jwt, ...opts.headers };
+  if (opts.body) headers['Content-Type'] = 'application/json';
+  const r = await fetch(API + path, { ...opts, headers, body: opts.body ? JSON.stringify(opts.body) : undefined });
+  if (r.status === 401) { sessionStorage.clear(); window.location.reload(); return null; }
+  return r.json();
+}
+
+/* ══════════════════════════════════════════
+   LOGIN FLOW
+   ══════════════════════════════════════════ */
+async function sendMagicLink() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const lastName = document.getElementById('loginName').value.trim();
+  if (!email || !lastName) return alert('Please enter both fields');
+
+  const btn = document.querySelector('.login-card .btn');
+  btn.textContent = 'Sending...'; btn.disabled = true;
+
+  try {
+    const r = await fetch(API + '/auth/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, lastName })
+    });
+    const data = await r.json();
+    // Always show magic link view (don't reveal if email exists)
+    hide('loginView'); hide('siteFooter');
+    document.getElementById('magicView').style.display = 'flex';
+    document.getElementById('magicEmail').textContent = email;
+  } catch(e) {
+    alert('Something went wrong. Please try again.');
+  } finally {
+    btn.textContent = 'Send Secure Link →'; btn.disabled = false;
+  }
+}
+
+/* ══════════════════════════════════════════
+   MAGIC LINK AUTO-LOGIN
+   ══════════════════════════════════════════ */
+async function checkMagicLink() {
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('token');
+  if (!token) return;
+
+  // Clear URL
+  window.history.replaceState({}, '', window.location.pathname);
+
+  try {
+    const r = await fetch(API + '/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token })
+    });
+    const data = await r.json();
+    if (data.success && data.sessionToken) {
+      jwt = data.sessionToken;
+      sessionStorage.setItem('portalToken', jwt);
+      sessionStorage.setItem('portalClient', JSON.stringify(data.client));
+      enterPortal(data.client);
+    } else {
+      alert(data.error || 'Invalid or expired link. Please request a new one.');
+    }
+  } catch(e) {
+    alert('Something went wrong. Please try again.');
+  }
+}
+
+/* ══════════════════════════════════════════
+   ENTER PORTAL
+   ══════════════════════════════════════════ */
+async function enterPortal(client) {
+  hide('loginView'); hide('siteFooter');
+  // Also hide magic view if visible
+  document.getElementById('magicView').style.display = 'none';
+  document.getElementById('portal').classList.add('active');
+
+  // Set greeting
+  const firstName = client.firstName || client.name?.split(',')[1]?.trim() || client.name || 'there';
+  document.querySelector('.ph-greet h2').textContent = 'Welcome back, ' + firstName;
+  const initials = (firstName[0] || '').toUpperCase() + (client.name?.split(',')[0]?.[0] || '').toUpperCase();
+  document.querySelector('.ph-av').textContent = initials || '?';
+
+  // Load dashboard data
+  await loadDashboard();
+}
+
+/* ══════════════════════════════════════════
+   DASHBOARD
+   ══════════════════════════════════════════ */
+async function loadDashboard() {
+  try {
+    const data = await api('/dashboard');
+    if (!data || data.error) return;
+
+    // Update greeting subtitle
+    const sub = document.querySelector('.ph-greet p');
+    sub.textContent = (data.client.clientSince ? 'Client since ' + new Date(data.client.clientSince).getFullYear() + ' · ' : '') + data.policySummary.active + ' active policies';
+
+    // Update team info if available
+    if (data.agent) {
+      const agentName = data.agent.name || 'Your Agent';
+      const agentInitials = agentName.split(' ').map(w => w[0]).join('').toUpperCase();
+      document.getElementById('teamAv').textContent = agentInitials;
+      document.getElementById('teamName').textContent = agentName;
+      var linksHtml = '';
+      if (data.agent.phone) linksHtml += '<a href="tel:' + escAttr(data.agent.phone.replace(/[^0-9+]/g,'')) + '">📞 ' + escHtml(data.agent.phone) + '</a>';
+      if (data.agent.email) linksHtml += '<a href="mailto:' + escAttr(data.agent.email) + '">✉️ Email</a>';
+      document.getElementById('teamLinks').innerHTML = linksHtml;
+    }
+
+    // Update coverage snapshot pills
+    const pills = document.querySelector('.snap-pills');
+
+    // Load policies for the pills
+    const polData = await api('/policies');
+    if (polData && !polData.error) {
+      window._policies = polData;
+      // Update pills
+      const allPols = polData.all || [];
+      pills.innerHTML = allPols.filter(function(p) { return p.status !== 'expired'; }).map(function(p) { return '<span class="snap-pill">' + escHtml(p.policyType) + '</span>'; }).join('');
+
+      // Update snapshot status
+      var snapH3 = document.querySelector('.snap-info h3');
+      var snapP = document.querySelector('.snap-info p');
+      var renewing = allPols.filter(function(p) { return p.status === 'renewing_soon'; });
+      if (renewing.length > 0) {
+        snapH3.textContent = renewing.length + ' Policy Renewing Soon';
+        snapP.textContent = 'Contact your agent to review your renewal';
+        document.querySelector('.snap-ic').textContent = '⚠️';
+      } else {
+        snapH3.textContent = "You're Well Protected";
+        snapP.textContent = 'All policies active and in good standing';
+      }
+
+      // Populate the coverage question policy select
+      var sel = document.getElementById('rcPolicySelect');
+      if (sel) {
+        sel.innerHTML = '<option>Not sure</option>';
+        allPols.forEach(function(p) {
+          sel.innerHTML += '<option>' + escHtml(p.policyType) + ' — ' + escHtml(p.producerName || '') + '</option>';
+        });
+      }
+    }
+  } catch(e) { console.error('Dashboard error:', e); }
+}
+
+/* ══════════════════════════════════════════
+   NAVIGATION
+   ══════════════════════════════════════════ */
+function goHome() {
+  show('homeView');
+  document.querySelectorAll('.pg').forEach(function(p) { p.classList.remove('on'); });
+  uNav('nH');
+}
+
+function showPg(p) {
+  hide('homeView');
+  document.querySelectorAll('.pg').forEach(function(x) { x.classList.remove('on'); });
+  var m = { pol: 'polPg', docs: 'docsPg', req: 'reqPg' };
+  if (m[p]) document.getElementById(m[p]).classList.add('on');
+  uNav({ pol: 'nP', docs: 'nD', req: 'nR' }[p] || 'nH');
+
+  // Load data for each page
+  if (p === 'pol') renderPolicies();
+  if (p === 'docs') loadDocuments();
+  if (p === 'req') loadRequests();
+}
+
+function uNav(id) {
+  document.querySelectorAll('.bn').forEach(function(n) { n.classList.remove('on'); });
+  var e = document.getElementById(id);
+  if (e) e.classList.add('on');
+}
+
+/* ══════════════════════════════════════════
+   MODALS
+   ══════════════════════════════════════════ */
+function openM(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow = 'hidden'; }
+function clM(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow = ''; setTimeout(function() { rstM(id); }, 200); }
+function clBg(e, id) { if (e.target === e.currentTarget) clM(id); }
+
+function rstM(id) {
+  if (id === 'certM') { show('c1'); hide('c2'); hide('c3'); document.querySelectorAll('.cp').forEach(function(c) { c.classList.remove('sel'); }); window._selectedCertPolicy = null; }
+  if (id === 'reqM') { show('r1'); ['rv','rd','ra','rc','ro','rsuc'].forEach(hide); }
+  if (id === 'conM') { show('cf'); hide('cfsuc'); }
+}
+
+/* ══════════════════════════════════════════
+   POLICIES PAGE
+   ══════════════════════════════════════════ */
+function renderPolicies() {
+  var pg = document.getElementById('polPg');
+  var polData = window._policies;
+  if (!polData) { pg.innerHTML = '<p class="pg-s">Loading policies...</p>'; return; }
+
+  var html = '<div class="pg-t">My Policies</div><div class="pg-s">All your active policies</div>';
+
+  if (polData.commercial && polData.commercial.length) {
+    html += '<div class="pg-g">Commercial Lines</div>';
+    polData.commercial.forEach(function(p) { html += renderPolicyCard(p); });
+  }
+  if (polData.personal && polData.personal.length) {
+    html += '<div class="pg-g">Personal Lines</div>';
+    polData.personal.forEach(function(p) { html += renderPolicyCard(p); });
+  }
+  if ((!polData.commercial || !polData.commercial.length) && (!polData.personal || !polData.personal.length)) {
+    html += '<p class="pg-s">No policies found.</p>';
+  }
+  pg.innerHTML = html;
+}
+
+function renderPolicyCard(p) {
+  var statusClass = p.status === 'renewing_soon' ? 'be' : 'ba';
+  var statusText = p.status === 'renewing_soon' ? 'Renews Soon' : p.status === 'expired' ? 'Expired' : 'Active';
+  var expDate = p.renewalDate ? new Date(p.renewalDate).toLocaleDateString('en-US', {month:'2-digit',day:'2-digit',year:'numeric'}) : '';
+  return '<div class="pol" onclick="viewPolicy(\'' + escAttr(p.policyNumber) + '\')"><div class="pol-top"><span class="pol-nm">' + escHtml(p.policyType) + '</span><span class="pol-bg ' + statusClass + '">' + statusText + '</span></div><div class="pol-mt"><span><strong>' + escHtml(p.producerName || '') + '</strong> · ' + escHtml(p.policyNumber) + '</span><span>Expires ' + expDate + '</span></div></div>';
+}
+
+/* ══════════════════════════════════════════
+   POLICY DETAIL
+   ══════════════════════════════════════════ */
+function viewPolicy(policyNumber) {
+  var allPols = (window._policies && window._policies.all) || [];
+  var p = allPols.find(function(pol) { return pol.policyNumber === policyNumber; });
+  if (!p) return;
+
+  var content = document.getElementById('polDContent');
+  var statusColor = p.status === 'renewing_soon' ? 'var(--gold-hover)' : p.status === 'expired' ? 'var(--gray-400)' : 'var(--green)';
+  var statusText = p.status === 'renewing_soon' ? 'Renews Soon' : p.status === 'expired' ? 'Expired' : 'Active';
+  var effDate = p.effectiveDate ? new Date(p.effectiveDate).toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}) : '';
+  var expDate = p.renewalDate ? new Date(p.renewalDate).toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}) : '';
+
+  var html = '<h2>' + escHtml(p.policyType) + '</h2>';
+  html += '<p class="ms">' + escHtml(p.producerName || '') + '</p>';
+  html += '<div class="cprev" style="margin-top:0"><h4>Policy Details</h4>';
+  html += '<div class="cf"><span class="cfl">Policy Number</span><span class="cfv">' + escHtml(p.policyNumber) + '</span></div>';
+  html += '<div class="cf"><span class="cfl">Status</span><span class="cfv" style="color:' + statusColor + '">' + statusText + '</span></div>';
+  if (effDate) html += '<div class="cf"><span class="cfl">Effective</span><span class="cfv">' + effDate + '</span></div>';
+  if (expDate) html += '<div class="cf"><span class="cfl">Expiration</span><span class="cfv">' + expDate + '</span></div>';
+  html += '</div>';
+
+  html += '<div style="display:flex;gap:0.5rem;margin-top:0.75rem">';
+  html += '<button class="btn-s" style="flex:1" onclick="clM(\'polD\');openCertModal()">Get Certificate</button>';
+  html += '<button class="btn-s" style="flex:1;background:var(--dark)" onclick="clM(\'polD\');openM(\'reqM\')">Request Change</button>';
+  html += '</div>';
+
+  content.innerHTML = html;
+  openM('polD');
+}
+
+/* ══════════════════════════════════════════
+   DOCUMENTS PAGE
+   ══════════════════════════════════════════ */
+async function loadDocuments() {
+  var pg = document.getElementById('docsPg');
+  pg.innerHTML = '<button class="pg-bk" onclick="goHome()">← Back</button><div class="pg-t">My Documents</div><div class="pg-s">Loading documents...</div>';
+  try {
+    var data = await api('/documents');
+    if (!data || data.error) return;
+
+    var html = '<button class="pg-bk" onclick="goHome()">← Back</button><div class="pg-t">My Documents</div><div class="pg-s">Certificates, dec pages, and more</div>';
+
+    var certs = (data.documents || []).filter(function(d) { return d.type === 'cert'; });
+    var others = (data.documents || []).filter(function(d) { return d.type !== 'cert'; });
+
+    if (certs.length) {
+      html += '<div class="pg-g">Certificates</div>';
+      certs.forEach(function(d) { html += renderDoc(d); });
+    }
+    if (others.length) {
+      html += '<div class="pg-g">Documents</div>';
+      others.forEach(function(d) { html += renderDoc(d); });
+    }
+    if (!data.documents || !data.documents.length) {
+      html += '<p class="pg-s" style="margin-top:1rem">No documents yet. Generated certificates will appear here.</p>';
+    }
+    pg.innerHTML = html;
+  } catch(e) { console.error('Docs error:', e); }
+}
+
+function renderDoc(d) {
+  var iconClass = d.type === 'cert' ? 'dc' : d.type === 'dec_page' ? 'dp' : 'di';
+  var icon = d.type === 'cert' ? '📋' : d.type === 'dec_page' ? '📄' : '🪪';
+  var date = d.date ? new Date(d.date).toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'}) : '';
+  return '<div class="doc" onclick="downloadDoc(\'' + escAttr(d.downloadUrl) + '\')"><div class="d-ic ' + iconClass + '">' + icon + '</div><div><h4>' + escHtml(d.name) + '</h4><p>' + date + '</p></div><span class="doc-dl">↓</span></div>';
+}
+
+async function downloadDoc(url) {
+  var fullUrl = 'https://casey.gosafeshield.com' + url;
+  try {
+    var r = await fetch(fullUrl, { headers: { 'Authorization': 'Bearer ' + jwt } });
+    var blob = await r.blob();
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = url.split('/').pop() || 'document';
+    a.click();
+    setTimeout(function() { URL.revokeObjectURL(a.href); }, 5000);
+  } catch(e) { console.error('Download error:', e); alert('Failed to download document.'); }
+}
+
+/* ══════════════════════════════════════════
+   REQUESTS PAGE
+   ══════════════════════════════════════════ */
+async function loadRequests() {
+  var pg = document.getElementById('reqPg');
+  pg.innerHTML = '<div class="pg-t">My Requests</div><div class="pg-s">Loading requests...</div>';
+  try {
+    var data = await api('/requests');
+    var html = '<div class="pg-t">My Requests</div><div class="pg-s">Track the status of your submissions</div>';
+    (data.requests || []).forEach(function(r) {
+      var statusClass = r.status === 'pending' ? 'rp' : r.status === 'in_progress' ? 'ri' : 'rd';
+      var statusText = r.status === 'pending' ? 'Pending' : r.status === 'in_progress' ? 'In Progress' : 'Completed';
+      var typeLabel = r.type.replace(/_/g,' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+      var date = new Date(r.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+      html += '<div class="req"><div class="req-top"><h4>' + escHtml(typeLabel) + '</h4><span class="req-bg ' + statusClass + '">' + statusText + '</span></div><p>Submitted ' + date + ' · ID: ' + escHtml(r.visibleId) + '</p></div>';
+    });
+    if (!data.requests || !data.requests.length) html += '<p class="pg-s" style="margin-top:1rem">No requests yet.</p>';
+    pg.innerHTML = html;
+  } catch(e) { console.error('Requests error:', e); }
+}
+
+/* ══════════════════════════════════════════
+   SUBMIT REQUEST
+   ══════════════════════════════════════════ */
+async function subR() {
+  var visible = ['rv','rd','ra','rc','ro'].find(function(id) { return document.getElementById(id) && document.getElementById(id).style.display !== 'none'; });
+  if (!visible) return;
+
+  var typeMap = { rv: 'vehicle', rd: 'driver', ra: 'address', rc: 'coverage', ro: 'other' };
+  var type = typeMap[visible];
+
+  // Collect all inputs from the visible form
+  var inputs = document.getElementById(visible).querySelectorAll('input, textarea, select');
+  var data = {};
+  inputs.forEach(function(inp) {
+    if (inp.type === 'file') return;
+    var labelEl = inp.closest('.fg');
+    var label = labelEl && labelEl.querySelector('label') ? labelEl.querySelector('label').textContent.trim() : 'field';
+    var key = label.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/_+$/,'');
+    if (inp.value.trim()) data[key] = inp.value.trim();
+  });
+
+  try {
+    var btn = document.getElementById(visible).querySelector('.btn-s');
+    btn.textContent = 'Submitting...'; btn.disabled = true;
+
+    var result = await api('/requests', { method: 'POST', body: { type: type, data: data } });
+    if (result && result.success) {
+      ['rv','rd','ra','rc','ro'].forEach(hide);
+      show('rsuc');
+    } else {
+      alert((result && result.error) || 'Failed to submit. Please try again.');
+      btn.textContent = 'Submit Request →'; btn.disabled = false;
+    }
+  } catch(e) {
+    alert('Something went wrong.');
+  }
+}
+
+function selR(id) { hide('r1'); show(id); }
+function rBk() { ['rv','rd','ra','rc','ro'].forEach(hide); show('r1'); }
+
+/* ══════════════════════════════════════════
+   SEND MESSAGE
+   ══════════════════════════════════════════ */
+async function sndMsg() {
+  var topic = document.querySelector('#cf select').value;
+  var message = document.querySelector('#cf textarea').value.trim();
+  if (!message) return alert('Please enter a message');
+
+  var btn = document.querySelector('#cf .btn-s');
+  btn.textContent = 'Sending...'; btn.disabled = true;
+
+  try {
+    var result = await api('/requests', { method: 'POST', body: { type: 'message', data: { topic: topic, message: message } } });
+    if (result && result.success) { hide('cf'); show('cfsuc'); }
+    else alert((result && result.error) || 'Failed to send.');
+  } catch(e) { alert('Something went wrong.'); }
+  finally { btn.textContent = 'Send Message →'; btn.disabled = false; }
+}
+
+/* ══════════════════════════════════════════
+   CERTIFICATE GENERATION
+   ══════════════════════════════════════════ */
+async function openCertModal() {
+  openM('certM');
+  var c1 = document.getElementById('c1');
+  var polData = window._policies;
+  var commercial = (polData && polData.commercial || []).filter(function(p) { return p.status !== 'expired'; });
+
+  if (!commercial.length) {
+    c1.innerHTML = '<h2>Generate Certificate</h2><p class="ms">No commercial policies found for certificate generation.</p>';
+    return;
+  }
+
+  var html = '<h2>Generate Certificate</h2><p class="ms">Select a commercial policy for your ACORD 25</p>';
+  commercial.forEach(function(p, i) {
+    var expDate = p.renewalDate ? new Date(p.renewalDate).toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}) : '';
+    html += '<div class="cp" onclick="selC(this,' + i + ')"><h4>' + escHtml(p.policyType) + '</h4><p>' + escHtml(p.policyNumber) + ' · Exp ' + expDate + '</p></div>';
+  });
+  c1.innerHTML = html;
+}
+
+function selC(el, idx) {
+  document.querySelectorAll('.cp').forEach(function(c) { c.classList.remove('sel'); });
+  el.classList.add('sel');
+
+  var polData = window._policies;
+  var commercial = (polData && polData.commercial || []).filter(function(p) { return p.status !== 'expired'; });
+  window._selectedCertPolicy = commercial[idx] || null;
+
+  // Update the preview area if we have policy details
+  var preview = document.getElementById('certPolicyPreview');
+  if (window._selectedCertPolicy && preview) {
+    var p = window._selectedCertPolicy;
+    var effDate = p.effectiveDate ? new Date(p.effectiveDate).toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}) : '';
+    var expDate = p.renewalDate ? new Date(p.renewalDate).toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}) : '';
+    var prevHtml = '<h4>Coverage — Auto-filled from policy</h4>';
+    if (p.producerName) prevHtml += '<div class="cf"><span class="cfl">Carrier</span><span class="cfv">' + escHtml(p.producerName) + '</span></div>';
+    prevHtml += '<div class="cf"><span class="cfl">Policy #</span><span class="cfv">' + escHtml(p.policyNumber) + '</span></div>';
+    if (effDate || expDate) prevHtml += '<div class="cf"><span class="cfl">Effective</span><span class="cfv">' + effDate + ' — ' + expDate + '</span></div>';
+    preview.innerHTML = prevHtml;
+  }
+
+  setTimeout(function() { hide('c1'); show('c2'); }, 120);
+}
+
+function cBk() { hide('c2'); show('c1'); }
+
+async function genC() {
+  var holderName = document.querySelector('#c2 input:nth-of-type(1)');
+  holderName = holderName ? holderName.value.trim() : '';
+  var address = document.querySelector('#c2 input:nth-of-type(2)');
+  address = address ? address.value.trim() : '';
+  var cityStateZip = document.querySelector('#c2 input:nth-of-type(3)');
+  cityStateZip = cityStateZip ? cityStateZip.value.trim() : '';
+
+  if (!holderName) return alert('Certificate holder name is required');
+
+  var selectedPolicy = window._selectedCertPolicy;
+  if (!selectedPolicy || !selectedPolicy.policyId) return alert('Please select a policy first');
+
+  // Parse city, state, zip
+  var parts = (cityStateZip || '').split(',').map(function(s) { return s.trim(); });
+  var city = parts[0] || '';
+  var stateZip = (parts[1] || '').trim().split(/\s+/);
+  var state = stateZip[0] || '';
+  var zip = stateZip[1] || '';
+
+  var btn = document.querySelector('#c2 .btn-s');
+  btn.textContent = 'Generating...'; btn.disabled = true;
+
+  try {
+    var result = await api('/certs/generate', {
+      method: 'POST',
+      body: {
+        policyId: selectedPolicy.policyId,
+        certHolder: { name: holderName, address: address, city: city, state: state, zip: zip }
+      }
+    });
+
+    if (result && result.success) {
+      hide('c2'); show('c3');
+      // Store download URL for the download button
+      window._lastCertUrl = result.downloadUrl;
+    } else {
+      alert((result && result.error) || 'Failed to generate certificate.');
+    }
+  } catch(e) { alert('Something went wrong.'); }
+  finally { btn.textContent = 'Generate Certificate →'; btn.disabled = false; }
+}
+
+function downloadCert() {
+  if (window._lastCertUrl) downloadDoc(window._lastCertUrl);
+  clM('certM');
+}
+
+/* ══════════════════════════════════════════
+   LOGOUT
+   ══════════════════════════════════════════ */
+function logout() {
+  sessionStorage.clear();
+  jwt = null;
+  window.location.href = window.location.pathname;
+}
+
+/* ══════════════════════════════════════════
+   SESSION RESTORE & INIT
+   ══════════════════════════════════════════ */
+window.addEventListener('DOMContentLoaded', async function() {
+  // Check for magic link token in URL
+  await checkMagicLink();
+
+  // Check for existing session
+  if (!jwt) {
+    var stored = sessionStorage.getItem('portalToken');
+    if (stored) jwt = stored;
+  }
+
+  if (jwt) {
+    var client = JSON.parse(sessionStorage.getItem('portalClient') || '{}');
+    enterPortal(client);
+  }
+});
+</script>
+</body>
+</html>
