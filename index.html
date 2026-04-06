@@ -148,9 +148,13 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--dark);m
 .pol-bg.ba{background:var(--green-dim);color:var(--green)}
 .pol-bg.be{background:var(--gold-dim2);color:var(--gold-hover)}
 .pol-bg.bc{background:#fde8e8;color:#b91c1c}
+.pol-ic{font-size:1.1rem;flex-shrink:0}
+.pol-carrier{font-size:0.72rem;color:var(--gray-400);margin-top:0.3rem;font-weight:500}
 .pol-mt{display:flex;flex-direction:column;gap:0.2rem;margin-top:0.4rem}
 .pol-mt span{font-size:0.73rem;color:var(--gray-400)}
 .pol-mt strong{color:var(--gray-500);font-weight:600}
+.pol-claim{display:block;margin-top:0.6rem;padding:0.45rem 0;text-align:center;font-size:0.72rem;font-weight:700;color:var(--navy);background:rgba(0,75,137,0.06);border-radius:var(--radius-xs);text-decoration:none;letter-spacing:0.3px;transition:background 0.15s}
+.pol-claim:hover{background:rgba(0,75,137,0.12)}
 
 /* Doc Items */
 .doc{display:flex;align-items:center;gap:0.7rem;padding:0.75rem;background:var(--white);border:1px solid var(--gray-100);border-radius:var(--radius-sm);margin-bottom:0.4rem;cursor:pointer;transition:all 0.15s;box-shadow:var(--shadow-sm)}
@@ -726,6 +730,30 @@ function switchPolTab(tab) {
   }
 }
 
+// Policy type icons and friendly display names
+function getPolicyIcon(type) {
+  if (!type) return '';
+  var t = type.toLowerCase();
+  if (t.includes('auto') || t.includes('vehicle') || t.includes('car')) return '<span class="pol-ic">🚗</span>';
+  if (t.includes('home') || t.includes('dwelling') || t.includes('ho-')) return '<span class="pol-ic">🏠</span>';
+  if (t.includes('condo') || t.includes('ho6') || t.includes('ho-6')) return '<span class="pol-ic">🏢</span>';
+  if (t.includes('renters') || t.includes('ho4') || t.includes('ho-4')) return '<span class="pol-ic">🔑</span>';
+  if (t.includes('flood')) return '<span class="pol-ic">🌊</span>';
+  if (t.includes('umbrella')) return '<span class="pol-ic">☂️</span>';
+  if (t.includes('boat') || t.includes('watercraft') || t.includes('yacht')) return '<span class="pol-ic">⛵</span>';
+  if (t.includes('motorcycle')) return '<span class="pol-ic">🏍️</span>';
+  if (t.includes('life')) return '<span class="pol-ic">💚</span>';
+  if (t.includes('inland marine') || t.includes('personal article') || t.includes('paf') || t.includes('scheduled property') || t.includes('valuable')) return '<span class="pol-ic">💎</span>';
+  if (t.includes('workers comp') || t.includes('work comp') || t.includes('wc')) return '<span class="pol-ic">🦺</span>';
+  if (t.includes('general liability') || t.includes('gl')) return '<span class="pol-ic">🛡️</span>';
+  if (t.includes('commercial') || t.includes('bop') || t.includes('business')) return '<span class="pol-ic">🏪</span>';
+  if (t.includes('cyber')) return '<span class="pol-ic">🔒</span>';
+  if (t.includes('professional') || t.includes('e&o') || t.includes('errors')) return '<span class="pol-ic">⚖️</span>';
+  if (t.includes('health') || t.includes('medical')) return '<span class="pol-ic">🏥</span>';
+  if (t.includes('pet')) return '<span class="pol-ic">🐾</span>';
+  return '<span class="pol-ic">📋</span>';
+}
+
 function renderPolicyCard(p) {
   var statusMap = {
     'active': { cls: 'ba', text: 'Active' },
@@ -738,7 +766,10 @@ function renderPolicyCard(p) {
   var s = statusMap[p.status] || { cls: 'ba', text: p.ncStatus || 'Active' };
   var expDate = p.renewalDate ? new Date(p.renewalDate).toLocaleDateString('en-US', {month:'2-digit',day:'2-digit',year:'numeric'}) : '';
   var expLabel = (p.status === 'active' || p.status === 'renewing_soon') ? 'Expires ' : 'Expired ';
-  return '<div class="pol" onclick="viewPolicy(\'' + escAttr(p.policyNumber) + '\')"><div class="pol-top"><span class="pol-nm">' + escHtml(p.policyType) + '</span><span class="pol-bg ' + s.cls + '">' + s.text + '</span></div><div class="pol-mt"><span><strong>' + escHtml(p.producerName || '') + '</strong> · ' + escHtml(p.policyNumber) + '</span><span>' + expLabel + expDate + '</span></div></div>';
+  var icon = getPolicyIcon(p.policyType);
+  var carrier = p.carrierName ? '<div class="pol-carrier">' + escHtml(p.carrierName) + '</div>' : '';
+  var claimBtn = p.claimsPhone ? '<a href="tel:' + escAttr(p.claimsPhone.replace(/[^0-9+]/g,'')) + '" class="pol-claim" onclick="event.stopPropagation()">📞 File a Claim - ' + escHtml(p.claimsPhone) + '</a>' : '';
+  return '<div class="pol" onclick="viewPolicy(\'' + escAttr(p.policyNumber) + '\')"><div class="pol-top">' + icon + '<span class="pol-nm">' + escHtml(p.policyType) + '</span><span class="pol-bg ' + s.cls + '">' + s.text + '</span></div>' + carrier + '<div class="pol-mt"><span><strong>' + escHtml(p.producerName || '') + '</strong> · ' + escHtml(p.policyNumber) + '</span><span>' + expLabel + expDate + '</span></div>' + claimBtn + '</div>';
 }
 
 /* ══════════════════════════════════════════
