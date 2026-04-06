@@ -147,6 +147,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--dark);m
 .pol-bg{font-size:0.58rem;font-weight:700;padding:0.15rem 0.45rem;border-radius:20px;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;flex-shrink:0}
 .pol-bg.ba{background:var(--green-dim);color:var(--green)}
 .pol-bg.be{background:var(--gold-dim2);color:var(--gold-hover)}
+.pol-bg.bc{background:#fde8e8;color:#b91c1c}
 .pol-mt{display:flex;flex-direction:column;gap:0.2rem;margin-top:0.4rem}
 .pol-mt span{font-size:0.73rem;color:var(--gray-400)}
 .pol-mt strong{color:var(--gray-500);font-weight:600}
@@ -588,12 +589,13 @@ async function loadDashboard() {
       window._policies = polData;
       // Update pills
       const allPols = polData.all || [];
-      pills.innerHTML = allPols.filter(function(p) { return p.status !== 'expired'; }).map(function(p) { return '<span class="snap-pill">' + escHtml(p.policyType) + '</span>'; }).join('');
+      var currentPols = (polData.commercial || []).concat(polData.personal || []);
+      pills.innerHTML = currentPols.map(function(p) { return '<span class="snap-pill">' + escHtml(p.policyType) + '</span>'; }).join('');
 
       // Update snapshot status
       var snapH3 = document.querySelector('.snap-info h3');
       var snapP = document.querySelector('.snap-info p');
-      var renewing = allPols.filter(function(p) { return p.status === 'renewing_soon'; });
+      var renewing = currentPols.filter(function(p) { return p.status === 'renewing_soon'; });
       if (renewing.length > 0) {
         snapH3.textContent = renewing.length + ' Policy Renewing Soon';
         snapP.textContent = 'Contact your agent to review your renewal';
@@ -607,8 +609,8 @@ async function loadDashboard() {
       var sel = document.getElementById('rcPolicySelect');
       if (sel) {
         sel.innerHTML = '<option>Not sure</option>';
-        allPols.forEach(function(p) {
-          sel.innerHTML += '<option>' + escHtml(p.policyType) + ' — ' + escHtml(p.producerName || '') + '</option>';
+        currentPols.forEach(function(p) {
+          sel.innerHTML += '<option>' + escHtml(p.policyType) + ' - ' + escHtml(p.policyNumber || '') + '</option>';
         });
       }
     }
@@ -664,27 +666,77 @@ function renderPolicies() {
   var polData = window._policies;
   if (!polData) { pg.innerHTML = '<p class="pg-s">Loading policies...</p>'; return; }
 
-  var html = '<div class="pg-t">My Policies</div><div class="pg-s">All your active policies</div>';
+  var hasCurrent = (polData.commercial && polData.commercial.length) || (polData.personal && polData.personal.length);
+  var hasHistory = polData.history && polData.history.length;
 
-  if (polData.commercial && polData.commercial.length) {
-    html += '<div class="pg-g">Commercial Lines</div>';
-    polData.commercial.forEach(function(p) { html += renderPolicyCard(p); });
+  var html = '<div class="pg-t">My Policies</div>';
+
+  // Tab toggle if there's history
+  if (hasCurrent && hasHistory) {
+    html += '<div style="display:flex;gap:0.5rem;margin-bottom:1rem">';
+    html += '<button class="btn-s pol-tab on" onclick="switchPolTab(\'current\')" id="tabCurrent" style="flex:1">Current</button>';
+    html += '<button class="btn-s pol-tab" onclick="switchPolTab(\'history\')" id="tabHistory" style="flex:1;background:var(--gray-200);color:var(--dark)">History</button>';
+    html += '</div>';
   }
-  if (polData.personal && polData.personal.length) {
-    html += '<div class="pg-g">Personal Lines</div>';
-    polData.personal.forEach(function(p) { html += renderPolicyCard(p); });
+
+  // Current policies section
+  html += '<div id="polCurrent">';
+  if (hasCurrent) {
+    html += '<div class="pg-s">' + ((polData.commercial || []).length + (polData.personal || []).length) + ' active policies</div>';
+    if (polData.commercial && polData.commercial.length) {
+      html += '<div class="pg-g">Commercial Lines</div>';
+      polData.commercial.forEach(function(p) { html += renderPolicyCard(p); });
+    }
+    if (polData.personal && polData.personal.length) {
+      html += '<div class="pg-g">Personal Lines</div>';
+      polData.personal.forEach(function(p) { html += renderPolicyCard(p); });
+    }
+  } else {
+    html += '<p class="pg-s">No active policies found.</p>';
   }
-  if ((!polData.commercial || !polData.commercial.length) && (!polData.personal || !polData.personal.length)) {
-    html += '<p class="pg-s">No policies found.</p>';
+  html += '</div>';
+
+  // History section
+  if (hasHistory) {
+    html += '<div id="polHistory" style="display:none">';
+    html += '<div class="pg-s">' + polData.history.length + ' past policies</div>';
+    polData.history.forEach(function(p) { html += renderPolicyCard(p); });
+    html += '</div>';
   }
+
   pg.innerHTML = html;
 }
 
+function switchPolTab(tab) {
+  var cur = document.getElementById('polCurrent');
+  var hist = document.getElementById('polHistory');
+  var tabC = document.getElementById('tabCurrent');
+  var tabH = document.getElementById('tabHistory');
+  if (!cur || !hist) return;
+  if (tab === 'history') {
+    cur.style.display = 'none'; hist.style.display = 'block';
+    tabH.classList.add('on'); tabH.style.background = ''; tabH.style.color = '';
+    tabC.classList.remove('on'); tabC.style.background = 'var(--gray-200)'; tabC.style.color = 'var(--dark)';
+  } else {
+    cur.style.display = 'block'; hist.style.display = 'none';
+    tabC.classList.add('on'); tabC.style.background = ''; tabC.style.color = '';
+    tabH.classList.remove('on'); tabH.style.background = 'var(--gray-200)'; tabH.style.color = 'var(--dark)';
+  }
+}
+
 function renderPolicyCard(p) {
-  var statusClass = p.status === 'renewing_soon' ? 'be' : 'ba';
-  var statusText = p.status === 'renewing_soon' ? 'Renews Soon' : p.status === 'expired' ? 'Expired' : 'Active';
+  var statusMap = {
+    'active': { cls: 'ba', text: 'Active' },
+    'renewing_soon': { cls: 'be', text: 'Renews Soon' },
+    'renewed': { cls: 'ba', text: 'Renewed' },
+    'cancelled': { cls: 'bc', text: 'Cancelled' },
+    'non_renewed': { cls: 'bc', text: 'Non-Renewed' },
+    'expired': { cls: 'bc', text: 'Expired' }
+  };
+  var s = statusMap[p.status] || { cls: 'ba', text: p.ncStatus || 'Active' };
   var expDate = p.renewalDate ? new Date(p.renewalDate).toLocaleDateString('en-US', {month:'2-digit',day:'2-digit',year:'numeric'}) : '';
-  return '<div class="pol" onclick="viewPolicy(\'' + escAttr(p.policyNumber) + '\')"><div class="pol-top"><span class="pol-nm">' + escHtml(p.policyType) + '</span><span class="pol-bg ' + statusClass + '">' + statusText + '</span></div><div class="pol-mt"><span><strong>' + escHtml(p.producerName || '') + '</strong> · ' + escHtml(p.policyNumber) + '</span><span>Expires ' + expDate + '</span></div></div>';
+  var expLabel = (p.status === 'active' || p.status === 'renewing_soon') ? 'Expires ' : 'Expired ';
+  return '<div class="pol" onclick="viewPolicy(\'' + escAttr(p.policyNumber) + '\')"><div class="pol-top"><span class="pol-nm">' + escHtml(p.policyType) + '</span><span class="pol-bg ' + s.cls + '">' + s.text + '</span></div><div class="pol-mt"><span><strong>' + escHtml(p.producerName || '') + '</strong> · ' + escHtml(p.policyNumber) + '</span><span>' + expLabel + expDate + '</span></div></div>';
 }
 
 /* ══════════════════════════════════════════
