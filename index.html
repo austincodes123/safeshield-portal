@@ -820,7 +820,20 @@ function renderOutsideCard(o, idx) {
   var fields = o.clientAction && o.clientAction.fillableFields;
   if (submission) {
     var when = submission.createdAt ? new Date(submission.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '';
-    formPanel = '<div class="op-panel"><div class="op-submitted"><strong>Submitted' + (when ? ' on ' + when : '') + '</strong>Austin will review and file this. You\'ll hear back if anything is missing.</div></div>';
+    var subData = submission.data || {};
+    var labelByKey = {};
+    (fields || []).forEach(function(f) { labelByKey[f.key] = { label: f.label, type: f.type }; });
+    var rows = '';
+    Object.keys(subData).forEach(function(k) {
+      if (k === 'outsideId') return;
+      var meta = labelByKey[k] || { label: k, type: 'text' };
+      var val = subData[k];
+      if (meta.type === 'currency' && val && !isNaN(val)) val = '$' + Number(val).toLocaleString('en-US');
+      else if (meta.type === 'date' && val) { var d = new Date(val); if (!isNaN(d)) val = d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+      rows += '<div class="cf"><span class="cfl">' + escHtml(meta.label) + '</span><span class="cfv">' + escHtml(val) + '</span></div>';
+    });
+    var detailBlock = rows ? '<div class="cprev" style="margin-top:0.6rem"><h4>What you submitted</h4>' + rows + '</div>' : '';
+    formPanel = '<div class="op-panel"><div class="op-submitted"><strong>Submitted' + (when ? ' on ' + when : '') + '</strong>Austin will review and file this. You\'ll hear back if anything is missing.</div>' + detailBlock + '</div>';
   } else if (fields && fields.length) {
     formPanel = '<div class="op-panel"><div class="op-pt">Enter your details</div><div class="op-form" id="opForm-' + idx + '"><div class="op-form-grid">'
       + fields.map(function(f) {
