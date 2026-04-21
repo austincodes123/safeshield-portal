@@ -240,6 +240,55 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--dark);m
 
 @media(min-width:480px){.mp{border-radius:var(--radius)}.bnav{max-width:480px;left:50%;transform:translateX(-50%)}}
 @media(min-width:768px){.act-grid{grid-template-columns:repeat(4,1fr)}.p-header,.sec{padding-left:2rem;padding-right:2rem}.snap,.team{margin-left:2rem;margin-right:2rem}.pg{padding-left:2rem;padding-right:2rem}}
+
+/* Manage online link on policy cards */
+.pol-online{display:inline-flex;align-items:center;gap:0.25rem;margin-top:0.5rem;padding:0.35rem 0.65rem;font-size:0.7rem;font-weight:700;color:var(--navy);background:rgba(0,75,137,0.08);border-radius:var(--radius-xs);text-decoration:none;letter-spacing:0.3px;transition:background 0.15s}
+.pol-online:hover{background:rgba(0,75,137,0.16)}
+
+/* Outside policies */
+.op{background:var(--white);border:1px solid var(--gray-100);border-radius:var(--radius-sm);margin-bottom:0.55rem;overflow:hidden;box-shadow:var(--shadow-sm)}
+.op-head{padding:0.95rem;display:grid;grid-template-columns:1fr auto auto;gap:0.75rem;align-items:center;cursor:pointer;transition:background 0.15s}
+.op-head:hover{background:var(--gray-50)}
+.op-head .op-label{font-weight:600;font-size:0.82rem;color:var(--dark)}
+.op-head .op-meta{font-size:0.72rem;color:var(--gray-400);margin-top:0.2rem;font-weight:500}
+.op-caret{font-size:0.7rem;color:var(--gray-300);transition:transform 0.2s}
+.op.open .op-caret{transform:rotate(90deg)}
+.op-body{display:none;border-top:1px solid var(--gray-100)}
+.op.open .op-body{display:block}
+.op-panel{padding:1rem}
+.op-panel+.op-panel{border-top:1px solid var(--gray-100)}
+.op-pt{font-size:0.65rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gray-300);margin-bottom:0.6rem}
+
+/* Gold carrier portal banner */
+.op-portal{background:linear-gradient(135deg,#fff8eb 0%,#fef3c7 100%);border:1px solid var(--gold);border-radius:var(--radius-xs);padding:0.85rem 0.95rem;display:flex;flex-direction:column;gap:0.6rem}
+@media(min-width:520px){.op-portal{flex-direction:row;align-items:center}.op-portal .op-portal-text{flex:1}}
+.op-portal-text strong{display:block;color:var(--navy);font-size:0.82rem;margin-bottom:0.2rem}
+.op-portal-text{font-size:0.75rem;color:var(--gray-500);line-height:1.45}
+.op-portal-phone{font-size:0.7rem;color:var(--gray-400);margin-top:0.3rem}
+.op-portal-phone a{color:var(--gray-400);text-decoration:none;border-bottom:1px dotted var(--gray-300)}
+.op-portal-btn{background:var(--gold);color:var(--white);font-weight:700;font-size:0.75rem;padding:0.65rem 1rem;border-radius:100px;text-decoration:none;white-space:nowrap;letter-spacing:0.3px;transition:background 0.15s;text-align:center}
+.op-portal-btn:hover{background:var(--gold-hover)}
+
+/* Instructions list */
+.op-instr{padding-left:1.1rem;margin:0}
+.op-instr li{font-size:0.78rem;color:var(--gray-500);line-height:1.5;margin-bottom:0.45rem}
+
+/* Inline form */
+.op-form .fg{margin-bottom:0.65rem}
+.op-form-grid{display:grid;grid-template-columns:1fr;gap:0.55rem}
+@media(min-width:520px){.op-form-grid{grid-template-columns:1fr 1fr}.op-form-grid .full{grid-column:1/-1}}
+
+/* Submitted state */
+.op-submitted{background:var(--blue-dim);border:1px solid rgba(37,99,235,0.2);border-radius:var(--radius-xs);padding:0.85rem 0.95rem;font-size:0.78rem;color:var(--blue);line-height:1.5}
+.op-submitted strong{display:block;margin-bottom:0.2rem}
+
+/* Status chips */
+.op-chip{font-size:0.58rem;font-weight:700;padding:0.15rem 0.5rem;border-radius:20px;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap}
+.op-chip-action{background:var(--gold-dim2);color:var(--gold-hover)}
+.op-chip-submitted{background:var(--blue-dim);color:var(--blue)}
+
+/* Outside policy note (read-only) */
+.op-note{background:var(--gray-50);border-radius:var(--radius-xs);padding:0.75rem 0.85rem;font-size:0.78rem;color:var(--gray-500);line-height:1.5}
 </style>
 </head>
 <body>
@@ -674,13 +723,28 @@ function rstM(id) {
 /* ══════════════════════════════════════════
    POLICIES PAGE
    ══════════════════════════════════════════ */
-function renderPolicies() {
+async function renderPolicies() {
   var pg = document.getElementById('polPg');
   var polData = window._policies;
   if (!polData) { pg.innerHTML = '<p class="pg-s">Loading policies...</p>'; return; }
 
+  // Fetch submitted outside-policy state so we know which are already filed
+  if (!window._outsideSubmissions) {
+    try {
+      var reqData = await api('/requests');
+      var subs = {};
+      if (reqData && reqData.requests) {
+        reqData.requests.forEach(function(r) {
+          if (r.type === 'outside_policy' && r.policyId) subs[r.policyId] = r;
+        });
+      }
+      window._outsideSubmissions = subs;
+    } catch(e) { window._outsideSubmissions = {}; }
+  }
+
   var hasCurrent = (polData.commercial && polData.commercial.length) || (polData.personal && polData.personal.length);
   var hasHistory = polData.history && polData.history.length;
+  var hasOutside = polData.outsidePolicies && polData.outsidePolicies.length;
 
   var html = '<div class="pg-t">My Policies</div>';
 
@@ -707,6 +771,12 @@ function renderPolicies() {
   } else {
     html += '<p class="pg-s">No active policies found.</p>';
   }
+
+  // Other Policies section (curated-client outside policies)
+  if (hasOutside) {
+    html += '<div class="pg-g">Other Policies (not written by Safeshield)</div>';
+    polData.outsidePolicies.forEach(function(o, i) { html += renderOutsideCard(o, i); });
+  }
   html += '</div>';
 
   // History section
@@ -718,6 +788,99 @@ function renderPolicies() {
   }
 
   pg.innerHTML = html;
+}
+
+/* ══════════════════════════════════════════
+   OUTSIDE POLICIES (curated-client self-service)
+   ══════════════════════════════════════════ */
+function renderOutsideCard(o, idx) {
+  var submission = (window._outsideSubmissions || {})[o.outsideId];
+  var chip = submission
+    ? '<span class="op-chip op-chip-submitted">Submitted</span>'
+    : (o.clientAction && o.clientAction.required ? '<span class="op-chip op-chip-action">Action Needed</span>' : '<span class="op-chip op-chip-submitted">Confirm</span>');
+
+  var portalPanel = '';
+  if (o.carrierPortal && o.carrierPortal.url) {
+    var phoneDigits = (o.carrierPortal.phone || '').replace(/[^0-9+]/g,'');
+    portalPanel = '<div class="op-panel"><div class="op-portal"><div class="op-portal-text"><strong>Access your account online</strong>'
+      + escHtml(o.carrierPortal.encouragement || '')
+      + (o.carrierPortal.phone ? '<div class="op-portal-phone">Or call <a href="tel:' + escAttr(phoneDigits) + '">' + escHtml(o.carrierPortal.phone) + '</a></div>' : '')
+      + '</div><a class="op-portal-btn" href="' + escAttr(o.carrierPortal.url) + '" target="_blank" rel="noopener">' + escHtml(o.carrierPortal.label || 'Go to carrier') + ' ↗</a></div></div>';
+  }
+
+  var instrPanel = '';
+  var instr = o.clientAction && o.clientAction.retrievalInstructions;
+  if (instr && instr.length) {
+    instrPanel = '<div class="op-panel"><div class="op-pt">How to find it</div><ol class="op-instr">'
+      + instr.map(function(s) { return '<li>' + escHtml(s) + '</li>'; }).join('')
+      + '</ol></div>';
+  }
+
+  var formPanel = '';
+  var fields = o.clientAction && o.clientAction.fillableFields;
+  if (submission) {
+    var when = submission.createdAt ? new Date(submission.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '';
+    formPanel = '<div class="op-panel"><div class="op-submitted"><strong>Submitted' + (when ? ' on ' + when : '') + '</strong>Austin will review and file this. You\'ll hear back if anything is missing.</div></div>';
+  } else if (fields && fields.length) {
+    formPanel = '<div class="op-panel"><div class="op-pt">Enter your details</div><div class="op-form" id="opForm-' + idx + '"><div class="op-form-grid">'
+      + fields.map(function(f) {
+          var isFull = f.type === 'file' || (f.type === 'text' && /beneficiar|scheduled|summary/i.test(f.key));
+          if (f.type === 'select') {
+            var opts = (f.options || []).map(function(x) { return '<option>' + escHtml(x) + '</option>'; }).join('');
+            return '<div class="fg' + (isFull ? ' full' : '') + '" data-key="' + escAttr(f.key) + '"><label>' + escHtml(f.label) + '</label><select>' + opts + '</select></div>';
+          }
+          var inputType = f.type === 'currency' ? 'number' : (f.type === 'date' ? 'date' : (f.type === 'file' ? 'file' : 'text'));
+          return '<div class="fg' + (isFull ? ' full' : '') + '" data-key="' + escAttr(f.key) + '"><label>' + escHtml(f.label) + '</label><input type="' + inputType + '" /></div>';
+        }).join('')
+      + '</div><button class="btn-s" style="width:100%;margin-top:0.75rem" onclick="submitOutsidePolicy(\'' + escAttr(o.outsideId) + '\',' + idx + ')">Submit for Austin to file</button></div></div>';
+  } else if (o.clientAction && o.clientAction.note) {
+    formPanel = '<div class="op-panel"><div class="op-pt">Note from Austin</div><div class="op-note">' + escHtml(o.clientAction.note) + '</div></div>';
+  }
+
+  return '<div class="op" id="op-' + idx + '">'
+    + '<div class="op-head" onclick="toggleOutside(' + idx + ')">'
+    + '<div><div class="op-label">' + escHtml(o.label) + '</div><div class="op-meta">' + escHtml(o.carrierName || '') + ' · ' + escHtml(o.policyType || '') + ' · ' + escHtml(o.insuredName || '') + '</div></div>'
+    + chip + '<span class="op-caret">▶</span>'
+    + '</div>'
+    + '<div class="op-body">' + portalPanel + instrPanel + formPanel + '</div>'
+    + '</div>';
+}
+
+function toggleOutside(idx) {
+  var el = document.getElementById('op-' + idx);
+  if (el) el.classList.toggle('open');
+}
+
+async function submitOutsidePolicy(outsideId, idx) {
+  var container = document.getElementById('opForm-' + idx);
+  if (!container) return;
+  var fields = container.querySelectorAll('.fg[data-key]');
+  var data = { outsideId: outsideId };
+  fields.forEach(function(fg) {
+    var key = fg.getAttribute('data-key');
+    var inp = fg.querySelector('input, select');
+    if (!inp) return;
+    if (inp.type === 'file') return; // file uploads need a separate flow
+    if (inp.value && inp.value.trim()) data[key] = inp.value.trim();
+  });
+
+  var btn = container.querySelector('button');
+  btn.textContent = 'Submitting...'; btn.disabled = true;
+  try {
+    var result = await api('/requests', { method: 'POST', body: { type: 'outside_policy', policyId: outsideId, data: data } });
+    if (result && result.success) {
+      // Mark submitted + re-render
+      window._outsideSubmissions = window._outsideSubmissions || {};
+      window._outsideSubmissions[outsideId] = { type: 'outside_policy', policyId: outsideId, status: 'pending', createdAt: Date.now() };
+      renderPolicies();
+    } else {
+      alert((result && result.error) || 'Failed to submit. Please try again.');
+      btn.textContent = 'Submit for Austin to file'; btn.disabled = false;
+    }
+  } catch(e) {
+    alert('Something went wrong.');
+    btn.textContent = 'Submit for Austin to file'; btn.disabled = false;
+  }
 }
 
 function switchPolTab(tab) {
@@ -784,7 +947,11 @@ function renderPolicyCard(p) {
     if (p.claimsUrl) claimBtns += '<a href="' + escAttr(p.claimsUrl) + '" target="_blank" rel="noopener" class="pol-claim pol-claim-web">🌐 File Claim Online</a>';
     claimBtns += '</div>';
   }
-  return '<div class="pol" onclick="viewPolicy(\'' + escAttr(p.policyNumber) + '\')"><div class="pol-top">' + icon + '<span class="pol-nm">' + escHtml(p.policyType) + '</span><span class="pol-bg ' + s.cls + '">' + s.text + '</span></div>' + carrier + premium + '<div class="pol-mt"><span><strong>' + escHtml(p.producerName || '') + '</strong> · ' + escHtml(p.policyNumber) + '</span><span>' + expLabel + expDate + '</span></div>' + claimBtns + '</div>';
+  var onlineBtn = '';
+  if (p.carrierPortalUrl) {
+    onlineBtn = '<a href="' + escAttr(p.carrierPortalUrl) + '" target="_blank" rel="noopener" class="pol-online" onclick="event.stopPropagation()">' + escHtml(p.carrierPortalLabel || 'Manage online') + ' ↗</a>';
+  }
+  return '<div class="pol" onclick="viewPolicy(\'' + escAttr(p.policyNumber) + '\')"><div class="pol-top">' + icon + '<span class="pol-nm">' + escHtml(p.policyType) + '</span><span class="pol-bg ' + s.cls + '">' + s.text + '</span></div>' + carrier + premium + '<div class="pol-mt"><span><strong>' + escHtml(p.producerName || '') + '</strong> · ' + escHtml(p.policyNumber) + '</span><span>' + expLabel + expDate + '</span></div>' + onlineBtn + claimBtns + '</div>';
 }
 
 /* ══════════════════════════════════════════
