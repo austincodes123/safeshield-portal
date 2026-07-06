@@ -160,6 +160,36 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--dark);m
 .pol-claim-web{color:var(--gold-hover);background:rgba(255,163,0,0.06)}
 .pol-claim-web:hover{background:rgba(255,163,0,0.12)}
 
+/* Renewal comparison drop-down on policy cards */
+.pol-renew{margin-top:0.6rem}
+.pol-renew-toggle{display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.65rem;background:var(--gold-dim);border:1px solid rgba(255,163,0,0.3);border-radius:var(--radius-xs);cursor:pointer;transition:background 0.15s}
+.pol-renew-toggle:hover{background:var(--gold-dim2)}
+.prt-lbl{font-size:0.7rem;font-weight:700;color:var(--gold-hover);letter-spacing:0.3px}
+.prt-caret{font-size:0.6rem;color:var(--gold-hover);transition:transform 0.2s}
+.pol-renew.open .prt-caret{transform:rotate(90deg)}
+.pol-renew-body{display:none;margin-top:0.45rem;background:var(--off-white);border:1px solid var(--gray-100);border-radius:var(--radius-xs);padding:0.55rem 0.8rem}
+.pol-renew.open .pol-renew-body{display:block}
+.prb-row{display:flex;justify-content:space-between;padding:0.3rem 0;font-size:0.75rem;border-bottom:1px solid var(--gray-100)}
+.prb-row:last-child{border-bottom:none}
+.prb-l{color:var(--gray-400)}
+.prb-v{font-weight:700;color:var(--dark)}
+.prb-v.up{color:#b91c1c}
+.prb-v.down{color:var(--green)}
+
+/* Named-insured groups on My Policies */
+.ent{background:var(--white);border:1px solid var(--gray-100);border-radius:var(--radius);margin-bottom:0.65rem;box-shadow:var(--shadow-sm);overflow:hidden}
+.ent-head{display:flex;align-items:center;gap:0.75rem;padding:0.95rem 1rem;cursor:pointer;transition:background 0.15s}
+.ent-head:hover{background:var(--gray-50)}
+.ent-name{font-weight:700;font-size:0.85rem;color:var(--dark)}
+.ent-meta{font-size:0.68rem;color:var(--gray-400);margin-top:0.1rem}
+.ent-right{margin-left:auto;text-align:right;flex-shrink:0}
+.ent-total{font-family:'Playfair Display',serif;font-weight:700;font-size:0.95rem;color:var(--navy)}
+.ent-caret{font-size:0.6rem;color:var(--gray-300);transition:transform 0.2s;flex-shrink:0}
+.ent.open .ent-caret{transform:rotate(90deg)}
+.ent-body{display:none;padding:0 0.75rem 0.75rem;border-top:1px solid var(--gray-100);background:var(--off-white)}
+.ent.open .ent-body{display:block}
+.ent-body .pol{margin-top:0.55rem;margin-bottom:0}
+
 /* Doc Items */
 .doc{display:flex;align-items:center;gap:0.7rem;padding:0.75rem;background:var(--white);border:1px solid var(--gray-100);border-radius:var(--radius-sm);margin-bottom:0.4rem;cursor:pointer;transition:all 0.15s;box-shadow:var(--shadow-sm)}
 .doc:hover{border-color:var(--gold)}
@@ -756,18 +786,43 @@ async function renderPolicies() {
     html += '</div>';
   }
 
-  // Current policies section
+  // Current policies — grouped by named insured, with a premium total per
+  // entity. Personal household first, then businesses by total premium.
   html += '<div id="polCurrent">';
   if (hasCurrent) {
-    html += '<div class="pg-s">' + ((polData.commercial || []).length + (polData.personal || []).length) + ' active policies</div>';
-    if (polData.commercial && polData.commercial.length) {
-      html += '<div class="pg-g">Commercial Lines</div>';
-      polData.commercial.forEach(function(p) { html += renderPolicyCard(p); });
-    }
-    if (polData.personal && polData.personal.length) {
-      html += '<div class="pg-g">Personal Lines</div>';
-      polData.personal.forEach(function(p) { html += renderPolicyCard(p); });
-    }
+    var current = (polData.commercial || []).concat(polData.personal || []);
+    html += '<div class="pg-s">' + current.length + ' active policies</div>';
+
+    var groups = {}, order = [];
+    current.forEach(function(p) {
+      var key = p.insuredName || 'My Policies';
+      if (!groups[key]) { groups[key] = []; order.push(key); }
+      groups[key].push(p);
+    });
+    function groupIsBiz(key) { return groups[key].every(function(p) { return p.isCommercial; }); }
+    function groupTotal(key) { return groups[key].reduce(function(s, p) { return s + (Number(p.premium) || 0); }, 0); }
+    order.sort(function(a, b) {
+      if (groupIsBiz(a) !== groupIsBiz(b)) return groupIsBiz(a) ? 1 : -1;
+      return groupTotal(b) - groupTotal(a);
+    });
+
+    order.forEach(function(key) {
+      var pols = groups[key];
+      var total = groupTotal(key);
+      var isBiz = groupIsBiz(key);
+      // Personal group starts open; businesses start collapsed unless
+      // something inside is renewing soon (don't bury a renewal).
+      var open = !isBiz || pols.some(function(p) { return p.status === 'renewing_soon'; });
+      var metaBits = [(isBiz ? 'Business' : 'Personal'), pols.length + (pols.length === 1 ? ' policy' : ' policies')];
+      html += '<div class="ent' + (open ? ' open' : '') + '">'
+        + '<div class="ent-head" onclick="this.parentElement.classList.toggle(\'open\')">'
+        + '<div><div class="ent-name">' + escHtml(key) + '</div><div class="ent-meta">' + metaBits.join(' · ') + '</div></div>'
+        + '<div class="ent-right"><div class="ent-total">' + fmtMoney(total) + '</div><div class="ent-meta">total premium</div></div>'
+        + '<span class="ent-caret">▶</span></div>'
+        + '<div class="ent-body">';
+      pols.forEach(function(p) { html += renderPolicyCard(p, true); });
+      html += '</div></div>';
+    });
   } else {
     html += '<p class="pg-s">No active policies found.</p>';
   }
@@ -937,7 +992,46 @@ function getPolicyIcon(type) {
   return '<span class="pol-ic">📋</span>';
 }
 
-function renderPolicyCard(p) {
+function fmtMoney(n) {
+  var v = Number(n);
+  return '$' + v.toLocaleString('en-US', { minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: 2 });
+}
+
+// "/yr" vs "/6 mo" from the term span — six-month auto policies shouldn't read as annual
+function premiumTermLabel(p) {
+  if (p.effectiveDate && p.renewalDate) {
+    var days = (new Date(p.renewalDate) - new Date(p.effectiveDate)) / 86400000;
+    if (days > 120 && days < 300) return '/6 mo';
+  }
+  return '/yr';
+}
+
+function toggleRenew(el) { el.closest('.pol-renew').classList.toggle('open'); }
+
+// Expandable current-term vs renewing-term comparison (p.renewal from the API)
+function renderRenewalDropdown(p) {
+  var r = p.renewal;
+  if (!r || !(Number(r.premium) > 0)) return '';
+  var renewDate = r.effectiveDate ? new Date(r.effectiveDate).toLocaleDateString('en-US', {month:'2-digit',day:'2-digit',year:'numeric'}) : '';
+  var cur = Number(p.premium) || 0;
+  var chg = '';
+  if (r.changeAmount != null) {
+    var up = r.changeAmount >= 0;
+    var sign = up ? '+' : '−';
+    chg = '<div class="prb-row"><span class="prb-l">Change</span><span class="prb-v ' + (up ? 'up' : 'down') + '">' + sign + fmtMoney(Math.abs(r.changeAmount))
+        + (r.changePercent != null ? ' (' + sign + Math.abs(r.changePercent) + '%)' : '') + '</span></div>';
+  }
+  return '<div class="pol-renew" onclick="event.stopPropagation()">'
+    + '<div class="pol-renew-toggle" onclick="toggleRenew(this)"><span class="prt-lbl">🔄 Renewal ' + (renewDate ? renewDate : 'quote') + ' — tap to compare</span><span class="prt-caret">▶</span></div>'
+    + '<div class="pol-renew-body">'
+    + (cur > 0 ? '<div class="prb-row"><span class="prb-l">Current term</span><span class="prb-v">' + fmtMoney(cur) + '</span></div>' : '')
+    + '<div class="prb-row"><span class="prb-l">Renewing term</span><span class="prb-v">' + fmtMoney(Number(r.premium)) + '</span></div>'
+    + chg
+    + (renewDate ? '<div class="prb-row"><span class="prb-l">New term starts</span><span class="prb-v">' + renewDate + '</span></div>' : '')
+    + '</div></div>';
+}
+
+function renderPolicyCard(p, hideInsured) {
   var statusMap = {
     'active': { cls: 'ba', text: 'Active' },
     'renewing_soon': { cls: 'be', text: 'Renews Soon' },
@@ -951,8 +1045,9 @@ function renderPolicyCard(p) {
   var expDate = p.renewalDate ? new Date(p.renewalDate).toLocaleDateString('en-US', {month:'2-digit',day:'2-digit',year:'numeric'}) : '';
   var expLabel = (p.status === 'active' || p.status === 'renewing_soon') ? 'Expires ' : 'Expired ';
   var icon = getPolicyIcon(p.policyType);
-  var carrier = p.carrierName ? '<div class="pol-carrier">' + escHtml(p.carrierName) + '</div>' : '';
-  var premium = p.premium ? '<div class="pol-premium">$' + Number(p.premium).toLocaleString('en-US') + '/yr</div>' : '';
+  var carrierBits = [p.carrierName, hideInsured ? null : p.insuredName].filter(Boolean).map(escHtml).join(' · ');
+  var carrier = carrierBits ? '<div class="pol-carrier">' + carrierBits + '</div>' : '';
+  var premium = p.premium ? '<div class="pol-premium">' + fmtMoney(p.premium) + premiumTermLabel(p) + '</div>' : '';
   var claimBtns = '';
   if (p.claimsPhone || p.claimsUrl) {
     claimBtns = '<div class="pol-actions" onclick="event.stopPropagation()">';
@@ -964,7 +1059,7 @@ function renderPolicyCard(p) {
   if (p.carrierPortalUrl) {
     onlineBtn = '<a href="' + escAttr(p.carrierPortalUrl) + '" target="_blank" rel="noopener" class="pol-online" onclick="event.stopPropagation()">' + escHtml(p.carrierPortalLabel || 'Manage online') + ' ↗</a>';
   }
-  return '<div class="pol" onclick="viewPolicy(\'' + escAttr(p.policyNumber) + '\')"><div class="pol-top">' + icon + '<span class="pol-nm">' + escHtml(p.policyType) + '</span><span class="pol-bg ' + s.cls + '">' + s.text + '</span></div>' + carrier + premium + '<div class="pol-mt"><span><strong>' + escHtml(p.producerName || '') + '</strong> · ' + escHtml(p.policyNumber) + '</span><span>' + expLabel + expDate + '</span></div>' + onlineBtn + claimBtns + '</div>';
+  return '<div class="pol" onclick="viewPolicy(\'' + escAttr(p.policyNumber) + '\')"><div class="pol-top">' + icon + '<span class="pol-nm">' + escHtml(p.policyType) + '</span><span class="pol-bg ' + s.cls + '">' + s.text + '</span></div>' + carrier + premium + '<div class="pol-mt"><span><strong>' + escHtml(p.producerName || '') + '</strong> · ' + escHtml(p.policyNumber) + '</span><span>' + expLabel + expDate + '</span></div>' + renderRenewalDropdown(p) + onlineBtn + claimBtns + '</div>';
 }
 
 /* ══════════════════════════════════════════
@@ -982,13 +1077,33 @@ function viewPolicy(policyNumber) {
   var expDate = p.renewalDate ? new Date(p.renewalDate).toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}) : '';
 
   var html = '<h2>' + escHtml(p.policyType) + '</h2>';
-  html += '<p class="ms">' + escHtml(p.producerName || '') + '</p>';
+  html += '<p class="ms">' + escHtml([p.insuredName, p.producerName].filter(Boolean).join(' · ')) + '</p>';
   html += '<div class="cprev" style="margin-top:0"><h4>Policy Details</h4>';
   html += '<div class="cf"><span class="cfl">Policy Number</span><span class="cfv">' + escHtml(p.policyNumber) + '</span></div>';
   html += '<div class="cf"><span class="cfl">Status</span><span class="cfv" style="color:' + statusColor + '">' + statusText + '</span></div>';
+  if (p.carrierName) html += '<div class="cf"><span class="cfl">Carrier</span><span class="cfv">' + escHtml(p.carrierName) + '</span></div>';
+  if (p.premium) html += '<div class="cf"><span class="cfl">Premium</span><span class="cfv">' + fmtMoney(p.premium) + premiumTermLabel(p) + '</span></div>';
   if (effDate) html += '<div class="cf"><span class="cfl">Effective</span><span class="cfv">' + effDate + '</span></div>';
   if (expDate) html += '<div class="cf"><span class="cfl">Expiration</span><span class="cfv">' + expDate + '</span></div>';
   html += '</div>';
+
+  // Renewal comparison — same data as the card drop-down, always expanded here
+  if (p.renewal && Number(p.renewal.premium) > 0) {
+    var r = p.renewal;
+    var rDate = r.effectiveDate ? new Date(r.effectiveDate).toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}) : '';
+    html += '<div class="cprev"><h4>Upcoming Renewal</h4>';
+    if (p.premium) html += '<div class="cf"><span class="cfl">Current term</span><span class="cfv">' + fmtMoney(p.premium) + '</span></div>';
+    html += '<div class="cf"><span class="cfl">Renewing term</span><span class="cfv">' + fmtMoney(r.premium) + '</span></div>';
+    if (r.changeAmount != null) {
+      var up = r.changeAmount >= 0, sign = up ? '+' : '−';
+      html += '<div class="cf"><span class="cfl">Change</span><span class="cfv" style="color:' + (up ? '#b91c1c' : 'var(--green)') + '">' + sign + fmtMoney(Math.abs(r.changeAmount))
+           + (r.changePercent != null ? ' (' + sign + Math.abs(r.changePercent) + '%)' : '') + '</span></div>';
+    }
+    if (rDate) html += '<div class="cf"><span class="cfl">New term starts</span><span class="cfv">' + rDate + '</span></div>';
+    html += '</div>';
+  }
+
+  html += '<div id="polDExtra"></div>';
 
   html += '<div style="display:flex;gap:0.5rem;margin-top:0.75rem">';
   if (p.isCommercial) html += '<button class="btn-s" style="flex:1" onclick="clM(\'polD\');openCertModal()">Get Certificate</button>';
@@ -997,6 +1112,36 @@ function viewPolicy(policyNumber) {
 
   content.innerHTML = html;
   openM('polD');
+
+  // Enrich with vehicles + coverages from the detail API (async, best-effort)
+  if (p.policyId) {
+    api('/policies/' + encodeURIComponent(p.policyId)).then(function(d) {
+      if (!d || d.error) return;
+      var extra = '';
+      if (d.vehicles && d.vehicles.length) {
+        extra += '<div class="cprev"><h4>Vehicles</h4>';
+        d.vehicles.forEach(function(v) {
+          var name = [v.year, v.make, v.model].filter(Boolean).join(' ') || v.description || 'Vehicle';
+          extra += '<div class="cf"><span class="cfl">' + escHtml(name) + '</span><span class="cfv">' + escHtml(v.vin || '') + '</span></div>';
+        });
+        extra += '</div>';
+      }
+      if (d.coverages && d.coverages.length) {
+        var seen = {};
+        var rows = '';
+        d.coverages.forEach(function(c) {
+          var val = [c.limits, c.deductibles ? c.deductibles + ' ded' : null].filter(Boolean).join(' · ');
+          var key = (c.name || '') + '|' + val;
+          if (seen[key]) return;
+          seen[key] = true;
+          rows += '<div class="cf"><span class="cfl">' + escHtml(c.name || 'Coverage') + '</span><span class="cfv">' + escHtml(val || '—') + '</span></div>';
+        });
+        if (rows) extra += '<div class="cprev"><h4>Coverages</h4>' + rows + '</div>';
+      }
+      var slot = document.getElementById('polDExtra');
+      if (slot && extra) slot.innerHTML = extra;
+    }).catch(function() {});
+  }
 }
 
 /* ══════════════════════════════════════════
