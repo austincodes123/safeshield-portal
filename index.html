@@ -319,6 +319,24 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--dark);m
 
 /* Outside policy note (read-only) */
 .op-note{background:var(--gray-50);border-radius:var(--radius-xs);padding:0.75rem 0.85rem;font-size:0.78rem;color:var(--gray-500);line-height:1.5}
+
+/* Policy notices (pending cancellation, action needed) */
+.pol-notice{margin-top:0.6rem;background:#fde8e8;border:1px solid rgba(185,28,28,0.3);border-radius:var(--radius-xs);padding:0.5rem 0.65rem;display:flex;align-items:center;justify-content:space-between;gap:0.5rem}
+.pol-notice.n-info{background:var(--gold-dim);border-color:rgba(255,163,0,0.3)}
+.pn-lbl{font-size:0.7rem;font-weight:700;color:#b91c1c;letter-spacing:0.3px;line-height:1.35}
+.pol-notice.n-info .pn-lbl{color:var(--gold-hover)}
+.pn-tap{font-size:0.62rem;color:#b91c1c;opacity:0.7;white-space:nowrap;font-weight:600;flex-shrink:0}
+.pol-notice.n-info .pn-tap{color:var(--gold-hover)}
+.nb{background:#fdf1f1;border:1px solid rgba(185,28,28,0.3);border-radius:var(--radius-sm);padding:0.95rem;margin:0.75rem 0}
+.nb.n-info{background:var(--gold-dim);border-color:rgba(255,163,0,0.3)}
+.nb-t{font-size:0.85rem;font-weight:700;color:#b91c1c;margin-bottom:0.35rem}
+.nb.n-info .nb-t{color:var(--gold-hover)}
+.nb-sum{font-size:0.78rem;color:var(--gray-500);line-height:1.55;margin-bottom:0.6rem}
+.nb-list{padding-left:1.15rem;margin:0 0 0.6rem}
+.nb-list li{font-size:0.78rem;color:var(--gray-600);line-height:1.5;margin-bottom:0.45rem}
+.nb-list li::marker{color:#b91c1c;font-weight:700}
+.nb.n-info .nb-list li::marker{color:var(--gold-hover)}
+.nb-foot{font-size:0.7rem;color:var(--gray-400);line-height:1.5;border-top:1px solid rgba(185,28,28,0.15);padding-top:0.5rem}
 </style>
 </head>
 <body>
@@ -682,13 +700,29 @@ async function loadDashboard() {
       // Update pills
       const allPols = polData.all || [];
       var currentPols = (polData.commercial || []).concat(polData.personal || []);
-      pills.innerHTML = currentPols.map(function(p) { return '<span class="snap-pill">' + escHtml(p.policyType) + '</span>'; }).join('');
+      // One pill per coverage line — package policies carry several lines
+      var pillLines = [];
+      currentPols.forEach(function(p) {
+        (p.linesOfBusiness && p.linesOfBusiness.length ? p.linesOfBusiness : [p.policyType]).forEach(function(l) {
+          if (l && pillLines.indexOf(l) === -1) pillLines.push(l);
+        });
+      });
+      pills.innerHTML = pillLines.map(function(l) { return '<span class="snap-pill">' + escHtml(l) + '</span>'; }).join('');
 
-      // Update snapshot status
+      // Update snapshot status — urgent agency notices outrank everything
       var snapH3 = document.querySelector('.snap-info h3');
       var snapP = document.querySelector('.snap-info p');
+      var snap = document.querySelector('.snap');
+      var urgent = currentPols.filter(function(p) { return p.notice && p.notice.severity === 'urgent'; });
       var renewing = currentPols.filter(function(p) { return p.status === 'renewing_soon'; });
-      if (renewing.length > 0) {
+      if (urgent.length > 0) {
+        snapH3.textContent = urgent.length + (urgent.length === 1 ? ' Policy Needs' : ' Policies Need') + ' Your Attention';
+        snapP.textContent = urgent[0].notice.title + ' — tap to see the plan';
+        document.querySelector('.snap-ic').textContent = '⚠️';
+        document.querySelector('.snap-ic').style.background = '#fde8e8';
+        snap.style.cursor = 'pointer';
+        snap.onclick = function() { showPg('pol'); };
+      } else if (renewing.length > 0) {
         snapH3.textContent = renewing.length + ' Policy Renewing Soon';
         snapP.textContent = 'Contact your agent to review your renewal';
         document.querySelector('.snap-ic').textContent = '⚠️';
@@ -1042,9 +1076,13 @@ function renderPolicyCard(p, hideInsured) {
     'expired': { cls: 'bc', text: 'Expired' }
   };
   var s = statusMap[p.status] || { cls: 'ba', text: p.ncStatus || 'Active' };
+  // Agency notice overrides the badge — a pending cancellation must never read "Active"
+  if (p.notice && p.notice.kind === 'pending_cancellation') s = { cls: 'bc', text: 'Pending Cancellation' };
   var expDate = p.renewalDate ? new Date(p.renewalDate).toLocaleDateString('en-US', {month:'2-digit',day:'2-digit',year:'numeric'}) : '';
   var expLabel = (p.status === 'active' || p.status === 'renewing_soon') ? 'Expires ' : 'Expired ';
   var icon = getPolicyIcon(p.policyType);
+  // A package policy carries several lines on one number — show them all
+  var typeLabel = (p.linesOfBusiness && p.linesOfBusiness.length > 1) ? p.linesOfBusiness.join(' + ') : p.policyType;
   var carrierBits = [p.carrierName, hideInsured ? null : p.insuredName].filter(Boolean).map(escHtml).join(' · ');
   var carrier = carrierBits ? '<div class="pol-carrier">' + carrierBits + '</div>' : '';
   var premium = p.premium ? '<div class="pol-premium">' + fmtMoney(p.premium) + premiumTermLabel(p) + '</div>' : '';
@@ -1059,7 +1097,12 @@ function renderPolicyCard(p, hideInsured) {
   if (p.carrierPortalUrl) {
     onlineBtn = '<a href="' + escAttr(p.carrierPortalUrl) + '" target="_blank" rel="noopener" class="pol-online" onclick="event.stopPropagation()">' + escHtml(p.carrierPortalLabel || 'Manage online') + ' ↗</a>';
   }
-  return '<div class="pol" onclick="viewPolicy(\'' + escAttr(p.policyNumber) + '\')"><div class="pol-top">' + icon + '<span class="pol-nm">' + escHtml(p.policyType) + '</span><span class="pol-bg ' + s.cls + '">' + s.text + '</span></div>' + carrier + premium + '<div class="pol-mt"><span><strong>' + escHtml(p.producerName || '') + '</strong> · ' + escHtml(p.policyNumber) + '</span><span>' + expLabel + expDate + '</span></div>' + renderRenewalDropdown(p) + onlineBtn + claimBtns + '</div>';
+  var noticeStrip = '';
+  if (p.notice) {
+    var urgent = p.notice.severity === 'urgent';
+    noticeStrip = '<div class="pol-notice' + (urgent ? '' : ' n-info') + '"><span class="pn-lbl">' + (urgent ? '⚠️ ' : 'ℹ️ ') + escHtml(p.notice.title) + '</span><span class="pn-tap">Tap for details ▸</span></div>';
+  }
+  return '<div class="pol" onclick="viewPolicy(\'' + escAttr(p.policyNumber) + '\')"><div class="pol-top">' + icon + '<span class="pol-nm">' + escHtml(typeLabel) + '</span><span class="pol-bg ' + s.cls + '">' + s.text + '</span></div>' + carrier + premium + '<div class="pol-mt"><span><strong>' + escHtml(p.producerName || '') + '</strong> · ' + escHtml(p.policyNumber) + '</span><span>' + expLabel + expDate + '</span></div>' + noticeStrip + renderRenewalDropdown(p) + onlineBtn + claimBtns + '</div>';
 }
 
 /* ══════════════════════════════════════════
@@ -1073,14 +1116,33 @@ function viewPolicy(policyNumber) {
   var content = document.getElementById('polDContent');
   var statusColor = p.status === 'renewing_soon' ? 'var(--gold-hover)' : p.status === 'expired' ? 'var(--gray-400)' : 'var(--green)';
   var statusText = p.status === 'renewing_soon' ? 'Renews Soon' : p.status === 'expired' ? 'Expired' : 'Active';
+  if (p.notice && p.notice.kind === 'pending_cancellation') { statusColor = '#b91c1c'; statusText = 'Pending Cancellation'; }
   var effDate = p.effectiveDate ? new Date(p.effectiveDate).toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}) : '';
   var expDate = p.renewalDate ? new Date(p.renewalDate).toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}) : '';
 
   var html = '<h2>' + escHtml(p.policyType) + '</h2>';
   html += '<p class="ms">' + escHtml([p.insuredName, p.producerName].filter(Boolean).join(' · ')) + '</p>';
+
+  // Agency notice — front and center, before anything else
+  if (p.notice) {
+    var n = p.notice;
+    html += '<div class="nb' + (n.severity === 'urgent' ? '' : ' n-info') + '">';
+    html += '<div class="nb-t">' + (n.severity === 'urgent' ? '⚠️ ' : 'ℹ️ ') + escHtml(n.title) + '</div>';
+    if (n.summary) html += '<div class="nb-sum">' + escHtml(n.summary) + '</div>';
+    if (n.actionItems && n.actionItems.length) {
+      html += '<ol class="nb-list">';
+      n.actionItems.forEach(function(it) { html += '<li>' + escHtml(it) + '</li>'; });
+      html += '</ol>';
+    }
+    if (n.footnote) html += '<div class="nb-foot">' + escHtml(n.footnote) + '</div>';
+    html += '<button class="btn-s" style="margin-top:0.6rem" onclick="clM(\'polD\');openM(\'conM\')">Reply to Your Agent →</button>';
+    html += '</div>';
+  }
+
   html += '<div class="cprev" style="margin-top:0"><h4>Policy Details</h4>';
   html += '<div class="cf"><span class="cfl">Policy Number</span><span class="cfv">' + escHtml(p.policyNumber) + '</span></div>';
   html += '<div class="cf"><span class="cfl">Status</span><span class="cfv" style="color:' + statusColor + '">' + statusText + '</span></div>';
+  if (p.linesOfBusiness && p.linesOfBusiness.length > 1) html += '<div class="cf"><span class="cfl">Coverage Lines</span><span class="cfv" style="text-align:right">' + p.linesOfBusiness.map(escHtml).join('<br>') + '</span></div>';
   if (p.carrierName) html += '<div class="cf"><span class="cfl">Carrier</span><span class="cfv">' + escHtml(p.carrierName) + '</span></div>';
   if (p.premium) html += '<div class="cf"><span class="cfl">Premium</span><span class="cfv">' + fmtMoney(p.premium) + premiumTermLabel(p) + '</span></div>';
   if (effDate) html += '<div class="cf"><span class="cfl">Effective</span><span class="cfv">' + effDate + '</span></div>';
@@ -1118,6 +1180,14 @@ function viewPolicy(policyNumber) {
     api('/policies/' + encodeURIComponent(p.policyId)).then(function(d) {
       if (!d || d.error) return;
       var extra = '';
+      if (d.properties && d.properties.length) {
+        extra += '<div class="cprev"><h4>Insured Property</h4>';
+        d.properties.forEach(function(pr) {
+          var addr = pr.address || [pr.addressLine1, pr.city, pr.state, pr.zipCode].filter(Boolean).join(', ') || 'Property';
+          extra += '<div class="cf"><span class="cfl">📍 Location</span><span class="cfv">' + escHtml(addr) + '</span></div>';
+        });
+        extra += '</div>';
+      }
       if (d.vehicles && d.vehicles.length) {
         extra += '<div class="cprev"><h4>Vehicles</h4>';
         d.vehicles.forEach(function(v) {
