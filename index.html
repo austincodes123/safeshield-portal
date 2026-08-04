@@ -446,6 +446,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--dark);m
         <div class="act fi f3" onclick="openM('reqM')"><div class="act-ic ib">✏️</div><h3>Request a Change</h3><p>Vehicle, driver, address</p></div>
         <div class="act fi f3" onclick="showPg('docs')"><div class="act-ic igr">📁</div><h3>My Documents</h3><p>Dec pages, certs, ID cards</p></div>
         <div class="act fi f4" onclick="openM('conM')"><div class="act-ic ig">💬</div><h3>Message Agent</h3><p>Quick question for your agent</p></div>
+        <div class="act fi f4" onclick="openNeedModal()"><div class="act-ic ib">➕</div><h3>Other Insurance Needs?</h3><p>Boat, business, life — tell us what's next</p></div>
       </div>
     </div>
 
@@ -550,6 +551,17 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--dark);m
 <div style="text-align:center;margin-top:0.75rem;font-size:0.85rem"><a id="coiMailto" href="#" style="color:var(--gold-hover,#b8860b)">Prefer email? Send it directly →</a></div></div>
 <div id="coiSuc" style="display:none"><div class="suc"><div class="s-ic">📋</div><h3>Request Sent!</h3><p id="coiSucMsg">Your certificate request went to your Safeshield team. You'll receive the COI by email shortly.</p>
 <button class="btn-s" style="margin-top:1rem" onclick="clM('coiM')">Done</button></div></div>
+</div></div>
+
+<!-- ══════ OTHER NEEDS MODAL ══════ -->
+<div class="mo" id="needM" onclick="clBg(event,'needM')"><div class="mp" onclick="event.stopPropagation()"><div class="m-bar"></div>
+<div id="nd1"><h2>Other Insurance Needs?</h2><p class="ms">Tell us what you'd like covered and we'll take it from there — your agent is notified either way.</p>
+<div class="fg"><label>What do you need coverage for?</label><select id="needType"><option>Loading options...</option></select></div>
+<div class="fg"><label>Tell us a bit about it</label><textarea id="needDetails" placeholder="e.g. Just bought a 24' boat, keeping it at Norwalk Cove Marina..." rows="3"></textarea></div>
+<button class="btn-s" onclick="submitNeed()">Get Started →</button></div>
+<div id="nd2" style="display:none"><div class="suc"><div class="s-ic">🎉</div><h3 id="needSucTitle">You're On Your Way!</h3><p id="needSucText">Austin has been notified.</p>
+<a id="needIntakeBtn" class="btn-s" style="display:none;margin-top:1rem;text-decoration:none;text-align:center" target="_blank" rel="noopener">Complete Your Details →</a>
+<button class="m-bk" style="justify-content:center;margin-top:0.65rem" onclick="clM('needM')">Close</button></div></div>
 </div></div>
 
 <!-- ══════ POLICY DETAIL MODAL ══════ -->
@@ -813,6 +825,60 @@ function rstM(id) {
   if (id === 'reqM') { show('r1'); ['rv','rd','ra','rc','ro','rsuc'].forEach(hide); }
   if (id === 'conM') { show('cf'); hide('cfsuc'); }
   if (id === 'coiM') { show('coiForm'); hide('coiSuc'); var cf = document.getElementById('coiFile'); if (cf) cf.value = ''; }
+  if (id === 'needM') { show('nd1'); hide('nd2'); }
+}
+
+/* ══════════════════════════════════════════
+   OTHER INSURANCE NEEDS → INTAKE
+   ══════════════════════════════════════════ */
+async function openNeedModal() {
+  openM('needM');
+  var sel = document.getElementById('needType');
+  if (!window._intakeForms) {
+    try {
+      var data = await api('/requests/intake-forms');
+      window._intakeForms = (data && data.forms) || [];
+    } catch(e) { window._intakeForms = []; }
+  }
+  sel.innerHTML = '';
+  window._intakeForms.forEach(function(f, i) {
+    sel.innerHTML += '<option value="' + i + '">' + escHtml(f.title) + '</option>';
+  });
+  sel.innerHTML += '<option value="other">Something else</option>';
+}
+
+async function submitNeed() {
+  var sel = document.getElementById('needType');
+  var details = document.getElementById('needDetails').value.trim();
+  var form = (sel.value !== 'other' && window._intakeForms) ? window._intakeForms[Number(sel.value)] : null;
+  var needLabel = form ? form.title : 'Something else';
+  if (!details && !form) return alert('Tell us a little about what you need');
+
+  var btn = document.querySelector('#nd1 .btn-s');
+  btn.textContent = 'One moment...'; btn.disabled = true;
+  try {
+    var result = await api('/requests', { method: 'POST', body: {
+      type: 'new_coverage',
+      data: { need: needLabel, details: details, intakeUrl: form ? form.url : '' }
+    } });
+    if (result && result.success) {
+      hide('nd1'); show('nd2');
+      var link = document.getElementById('needIntakeBtn');
+      if (form && form.url) {
+        document.getElementById('needSucTitle').textContent = "You're On Your Way!";
+        document.getElementById('needSucText').textContent = 'Austin has been notified. Complete the quick form below and we’ll get to work on your ' + needLabel.toLowerCase() + ' quote.';
+        link.href = form.url;
+        link.style.display = 'block';
+      } else {
+        document.getElementById('needSucTitle').textContent = 'Got It!';
+        document.getElementById('needSucText').textContent = 'Austin has been notified and will reach out to put together exactly what you need.';
+        link.style.display = 'none';
+      }
+    } else {
+      alert((result && result.error) || 'Failed to submit. Please try again.');
+    }
+  } catch(e) { alert('Something went wrong.'); }
+  finally { btn.textContent = 'Get Started →'; btn.disabled = false; }
 }
 
 /* ══════════════════════════════════════════
