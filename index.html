@@ -866,8 +866,10 @@ async function submitNeed() {
       var link = document.getElementById('needIntakeBtn');
       if (form && form.url) {
         document.getElementById('needSucTitle').textContent = "You're On Your Way!";
-        document.getElementById('needSucText').textContent = 'Austin has been notified. Complete the quick form below and we’ll get to work on your ' + needLabel.toLowerCase() + ' quote.';
-        link.href = form.url;
+        document.getElementById('needSucText').textContent = 'Austin has been notified. Complete the quick form below — we\'ve pre-filled what we already have on file — and we\'ll get to work on your ' + needLabel.toLowerCase() + ' quote.';
+        // ?pf= token: the intake form auto-fills name/email/phone/address
+        // from what Safeshield already has for this client.
+        link.href = form.url + (result.prefillToken ? '?pf=' + encodeURIComponent(result.prefillToken) : '');
         link.style.display = 'block';
       } else {
         document.getElementById('needSucTitle').textContent = 'Got It!';
