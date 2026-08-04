@@ -581,7 +581,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--dark);m
 
 <!-- ══════ OTHER NEEDS CONCIERGE CHAT ══════ -->
 <div class="mo" id="needM" onclick="clBg(event,'needM')"><div class="mp" onclick="event.stopPropagation()"><div class="m-bar"></div>
-<h2>Need More Coverage?</h2><p class="ms">Tell me what you're thinking about and I'll point you in the right direction — Austin's team sees everything we discuss.</p>
+<h2>Need More Coverage?</h2><p class="ms">Austin's team sees everything we discuss.</p>
 <div class="nc-log" id="ncLog"></div>
 <div class="nc-row"><input id="ncInput" placeholder="e.g. I just bought a boat..." maxlength="1500" onkeydown="if(event.key==='Enter')sendNeedMsg()"><button class="nc-send" id="ncSend" onclick="sendNeedMsg()">Send</button></div>
 </div></div>
@@ -873,7 +873,7 @@ function openNeedModal() {
   if (!window._ncMsgs || !window._ncMsgs.length) {
     var firstName = '';
     try { firstName = (JSON.parse(sessionStorage.getItem('portalClient') || '{}').firstName) || ''; } catch(e) {}
-    window._ncMsgs = [{ role: 'assistant', content: 'Hi' + (firstName ? ' ' + firstName : '') + '! What kind of insurance are you thinking about? A new boat, a business, life insurance, another property — tell me what\'s going on and I\'ll get you set up.' }];
+    window._ncMsgs = [{ role: 'assistant', content: 'Hi' + (firstName ? ' ' + firstName : '') + '! What kind of insurance do you need? I\'ll tailor the conversation to solve exactly what you\'re looking for.' }];
     window._ncIntakeUrl = null;
     window._ncDone = false;
   }
