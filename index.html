@@ -337,6 +337,13 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--dark);m
 .nb-list li::marker{color:#b91c1c;font-weight:700}
 .nb.n-info .nb-list li::marker{color:var(--gold-hover)}
 .nb-foot{font-size:0.7rem;color:var(--gray-400);line-height:1.5;border-top:1px solid rgba(185,28,28,0.15);padding-top:0.5rem}
+
+/* Value summary on policy cards + protection box in detail */
+.pol-value{display:flex;align-items:baseline;gap:0.3rem;margin-top:0.35rem;font-size:0.7rem;font-weight:600;color:var(--navy);line-height:1.4}
+.cf .cfv.cfv-good{color:var(--green)}
+.cprev.protect{background:linear-gradient(135deg,rgba(0,75,137,0.04) 0%,rgba(255,163,0,0.05) 100%);border-color:rgba(0,75,137,0.15)}
+.cprev.protect h4{color:var(--navy)}
+.cf-savings{display:block;margin-top:0.55rem;padding:0.5rem 0.65rem;background:var(--green-dim);border-radius:var(--radius-xs);font-size:0.72rem;font-weight:600;color:#15803d;line-height:1.45}
 </style>
 </head>
 <body>
@@ -722,6 +729,14 @@ async function loadDashboard() {
         document.querySelector('.snap-ic').style.background = '#fde8e8';
         snap.style.cursor = 'pointer';
         snap.onclick = function() { showPg('pol'); };
+        // Pills: name ONLY the policy that needs attention, then reassure
+        // about the rest — listing every coverage here reads as if they all
+        // have a problem.
+        var urgentLabels = urgent.map(function(p) { return (p.policyType || 'Policy') + (p.carrierName ? ' · ' + p.carrierName : ''); });
+        var countLines = function(s, p) { return s + ((p.linesOfBusiness && p.linesOfBusiness.length) || 1); };
+        var okCount = currentPols.reduce(countLines, 0) - urgent.reduce(countLines, 0);
+        pills.innerHTML = urgentLabels.map(function(l) { return '<span class="snap-pill" style="background:#fde8e8;border-color:rgba(185,28,28,0.25);color:#b91c1c;font-weight:700">' + escHtml(l) + '</span>'; }).join('')
+          + (okCount > 0 ? '<span class="snap-pill">' + okCount + ' other coverage' + (okCount === 1 ? '' : 's') + ' in good standing ✓</span>' : '');
       } else if (renewing.length > 0) {
         snapH3.textContent = renewing.length + ' Policy Renewing Soon';
         snapP.textContent = 'Contact your agent to review your renewal';
@@ -825,7 +840,8 @@ async function renderPolicies() {
   html += '<div id="polCurrent">';
   if (hasCurrent) {
     var current = (polData.commercial || []).concat(polData.personal || []);
-    html += '<div class="pg-s">' + current.length + ' active policies</div>';
+    var lineCount = current.reduce(function(s, p) { return s + ((p.linesOfBusiness && p.linesOfBusiness.length) || 1); }, 0);
+    html += '<div class="pg-s">' + lineCount + ' active ' + (lineCount === 1 ? 'coverage' : 'coverages') + ' across ' + current.length + ' polic' + (current.length === 1 ? 'y' : 'ies') + '</div>';
 
     var groups = {}, order = [];
     current.forEach(function(p) {
@@ -1086,6 +1102,7 @@ function renderPolicyCard(p, hideInsured) {
   var carrierBits = [p.carrierName, hideInsured ? null : p.insuredName].filter(Boolean).map(escHtml).join(' · ');
   var carrier = carrierBits ? '<div class="pol-carrier">' + carrierBits + '</div>' : '';
   var premium = p.premium ? '<div class="pol-premium">' + fmtMoney(p.premium) + premiumTermLabel(p) + '</div>' : '';
+  var valueLine = p.valueSummary ? '<div class="pol-value">🛡️ <span>' + escHtml(p.valueSummary) + '</span></div>' : '';
   var claimBtns = '';
   if (p.claimsPhone || p.claimsUrl) {
     claimBtns = '<div class="pol-actions" onclick="event.stopPropagation()">';
@@ -1102,7 +1119,7 @@ function renderPolicyCard(p, hideInsured) {
     var urgent = p.notice.severity === 'urgent';
     noticeStrip = '<div class="pol-notice' + (urgent ? '' : ' n-info') + '"><span class="pn-lbl">' + (urgent ? '⚠️ ' : 'ℹ️ ') + escHtml(p.notice.title) + '</span><span class="pn-tap">Tap for details ▸</span></div>';
   }
-  return '<div class="pol" onclick="viewPolicy(\'' + escAttr(p.policyNumber) + '\')"><div class="pol-top">' + icon + '<span class="pol-nm">' + escHtml(typeLabel) + '</span><span class="pol-bg ' + s.cls + '">' + s.text + '</span></div>' + carrier + premium + '<div class="pol-mt"><span><strong>' + escHtml(p.producerName || '') + '</strong> · ' + escHtml(p.policyNumber) + '</span><span>' + expLabel + expDate + '</span></div>' + noticeStrip + renderRenewalDropdown(p) + onlineBtn + claimBtns + '</div>';
+  return '<div class="pol" onclick="viewPolicy(\'' + escAttr(p.policyNumber) + '\')"><div class="pol-top">' + icon + '<span class="pol-nm">' + escHtml(typeLabel) + '</span><span class="pol-bg ' + s.cls + '">' + s.text + '</span></div>' + carrier + premium + valueLine + '<div class="pol-mt"><span><strong>' + escHtml(p.producerName || '') + '</strong> · ' + escHtml(p.policyNumber) + '</span><span>' + expLabel + expDate + '</span></div>' + noticeStrip + renderRenewalDropdown(p) + onlineBtn + claimBtns + '</div>';
 }
 
 /* ══════════════════════════════════════════
@@ -1139,7 +1156,18 @@ function viewPolicy(policyNumber) {
     html += '</div>';
   }
 
-  html += '<div class="cprev" style="margin-top:0"><h4>Policy Details</h4>';
+  // What this premium buys — leads the detail so value reads before cost
+  if (p.protection && p.protection.length) {
+    html += '<div class="cprev protect" style="margin-top:0"><h4>🛡️ Your Protection</h4>';
+    p.protection.forEach(function(row) {
+      var good = /included/i.test(row.value || '');
+      html += '<div class="cf"><span class="cfl">' + escHtml(row.label) + '</span><span class="cfv' + (good ? ' cfv-good' : '') + '">' + escHtml(row.value) + '</span></div>';
+    });
+    if (p.savingsNote) html += '<span class="cf-savings">💰 ' + escHtml(p.savingsNote) + '</span>';
+    html += '</div>';
+  }
+
+  html += '<div class="cprev"' + (p.protection && p.protection.length ? '' : ' style="margin-top:0"') + '><h4>Policy Details</h4>';
   html += '<div class="cf"><span class="cfl">Policy Number</span><span class="cfv">' + escHtml(p.policyNumber) + '</span></div>';
   html += '<div class="cf"><span class="cfl">Status</span><span class="cfv" style="color:' + statusColor + '">' + statusText + '</span></div>';
   if (p.linesOfBusiness && p.linesOfBusiness.length > 1) html += '<div class="cf"><span class="cfl">Coverage Lines</span><span class="cfv" style="text-align:right">' + p.linesOfBusiness.map(escHtml).join('<br>') + '</span></div>';
