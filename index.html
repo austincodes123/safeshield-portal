@@ -153,6 +153,10 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--dark);m
 .bp.open .bp-car{transform:rotate(90deg)}
 .bp-b{display:none;padding:0 12px 12px;font-size:13px;color:#5b6b7f;line-height:1.55}
 .bp.open .bp-b{display:block}
+.pol-bell{margin-left:auto;margin-right:0.4rem;font-size:0.95rem;cursor:pointer;filter:drop-shadow(0 0 1px rgba(0,0,0,0.15));animation:bellpulse 2.4s ease-in-out infinite}
+.ent-bell{margin-left:0.4rem;font-size:0.8rem;position:relative;display:inline-block}
+.ent-bell-n{position:absolute;top:-0.35rem;right:-0.55rem;background:#b45309;color:#fff;font-size:0.55rem;font-weight:800;border-radius:99px;padding:0.05rem 0.28rem;line-height:1.1}
+@keyframes bellpulse{0%,100%{transform:rotate(0)}5%{transform:rotate(12deg)}10%{transform:rotate(-10deg)}15%{transform:rotate(6deg)}20%{transform:rotate(0)}}
 .pg-g{font-size:0.65rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray-300);margin:0.9rem 0 0.45rem}
 
 /* Policy Cards */
@@ -478,6 +482,9 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--dark);m
       </div>
     </div>
 
+    <div class="sec"><div class="sec-lbl fi f2">Your Policies</div></div>
+    <div id="homePols" style="padding:0 1.25rem"></div>
+
     <div class="sec">
       <div class="sec-lbl fi f2">What do you need?</div>
       <div class="act-grid">
@@ -765,6 +772,7 @@ async function loadDashboard() {
 
     // Load policies for the pills
     const polData = await api('/policies');
+    try { renderHomePolicies(polData); } catch(e) { console.error('home policies render:', e); }
     if (polData && !polData.error) {
       window._policies = polData;
       // Show certificate button only if client has commercial policies
@@ -981,36 +989,7 @@ async function renderPolicies() {
     html += '<input class="pol-search" id="polSearch" type="search" placeholder="Search anything: a policy, coverage, payment, car..." oninput="filterPols(this.value)">';
     html += '<div class="pol-nores" id="polNoRes">Nothing matching that here. Ask us and we\'ll answer right away.<br><button class="btn-s" style="margin-top:0.6rem;width:auto;padding:0.5rem 1.1rem" onclick="openM(\'conM\')">Ask Your Agent →</button></div>';
 
-    var groups = {}, order = [];
-    current.forEach(function(p) {
-      var key = p.insuredName || 'My Policies';
-      if (!groups[key]) { groups[key] = []; order.push(key); }
-      groups[key].push(p);
-    });
-    function groupIsBiz(key) { return groups[key].every(function(p) { return p.isCommercial; }); }
-    function groupTotal(key) { return groups[key].reduce(function(s, p) { return s + (Number(p.premium) || 0); }, 0); }
-    order.sort(function(a, b) {
-      if (groupIsBiz(a) !== groupIsBiz(b)) return groupIsBiz(a) ? 1 : -1;
-      return groupTotal(b) - groupTotal(a);
-    });
-
-    order.forEach(function(key) {
-      var pols = groups[key];
-      var total = groupTotal(key);
-      var isBiz = groupIsBiz(key);
-      // Personal group starts open; businesses start collapsed unless
-      // something inside is renewing soon (don't bury a renewal).
-      var open = !isBiz || pols.some(function(p) { return p.status === 'renewing_soon'; });
-      var metaBits = [(isBiz ? 'Business' : 'Personal'), pols.length + (pols.length === 1 ? ' policy' : ' policies')];
-      html += '<div class="ent' + (open ? ' open' : '') + '">'
-        + '<div class="ent-head" onclick="this.parentElement.classList.toggle(\'open\')">'
-        + '<div><div class="ent-name">' + escHtml(key) + '</div><div class="ent-meta">' + metaBits.join(' · ') + '</div></div>'
-        + '<div class="ent-right"><div class="ent-total">' + fmtMoney(total) + '</div><div class="ent-meta">total premium</div></div>'
-        + '<span class="ent-caret">▶</span></div>'
-        + '<div class="ent-body">';
-      pols.forEach(function(p) { html += renderPolicyCard(p, true); });
-      html += '</div></div>';
-    });
+    html += renderEntityGroups(current);
   } else {
     html += '<p class="pg-s">No active policies found.</p>';
   }
@@ -1139,6 +1118,69 @@ async function submitOutsidePolicy(outsideId, idx) {
   }
 }
 
+function renderHomePolicies(polData) {
+  var host = document.getElementById('homePols');
+  if (!host || !polData) return;
+  var current = (polData.commercial || []).concat(polData.personal || []);
+  if (!current.length) { host.innerHTML = ''; return; }
+  var html = '<input class="pol-search" type="search" placeholder="Search anything: a policy, coverage, payment, car..." oninput="filterHomePols(this.value)">';
+  html += '<div class="pol-nores" id="homeNoRes">Nothing matching that here. Ask us and we\'ll answer right away.<br><button class="btn-s" style="margin-top:0.6rem;width:auto;padding:0.5rem 1.1rem" onclick="openM(\'conM\')">Ask Your Agent →</button></div>';
+  html += renderEntityGroups(current);
+  host.innerHTML = html;
+}
+function filterHomePols(q) {
+  q = (q || '').trim().toLowerCase();
+  var root = document.getElementById('homePols');
+  if (!root) return;
+  var hits = 0;
+  root.querySelectorAll('.ent').forEach(function(g) {
+    var any = false;
+    g.querySelectorAll('.pol[data-q]').forEach(function(c) {
+      var m = !q || c.getAttribute('data-q').indexOf(q) !== -1;
+      c.style.display = m ? '' : 'none';
+      if (m) { any = true; hits++; }
+    });
+    g.style.display = (any || !q) ? '' : 'none';
+    if (q && any) g.classList.add('open');
+  });
+  var nr = document.getElementById('homeNoRes');
+  if (nr) nr.style.display = (q && hits === 0) ? 'block' : 'none';
+}
+function renderEntityGroups(current) {
+  var html = '';
+  var groups = {}, order = [];
+  current.forEach(function(p) {
+    var key = p.insuredName || 'My Policies';
+    if (!groups[key]) { groups[key] = []; order.push(key); }
+    groups[key].push(p);
+  });
+  function groupIsBiz(key) { return groups[key].every(function(p) { return p.isCommercial; }); }
+  function groupTotal(key) { return groups[key].reduce(function(s, p) { return s + (Number(p.premium) || 0); }, 0); }
+  order.sort(function(a, b) {
+    if (groupIsBiz(a) !== groupIsBiz(b)) return groupIsBiz(a) ? 1 : -1;
+    return groupTotal(b) - groupTotal(a);
+  });
+  order.forEach(function(key) {
+    var pols = groups[key];
+    var total = groupTotal(key);
+    var isBiz = groupIsBiz(key);
+    var nBell = pols.filter(function(p) { return p.notice; }).length;
+    // Personal group starts open; businesses start collapsed unless
+    // something inside is renewing soon or carries a notice (never bury either).
+    var open = !isBiz || nBell > 0 || pols.some(function(p) { return p.status === 'renewing_soon'; });
+    var metaBits = [(isBiz ? 'Business' : 'Personal'), pols.length + (pols.length === 1 ? ' policy' : ' policies')];
+    var bell = nBell > 0 ? '<span class="ent-bell" title="Needs attention">🔔<span class="ent-bell-n">' + nBell + '</span></span>' : '';
+    html += '<div class="ent' + (open ? ' open' : '') + '">'
+      + '<div class="ent-head" onclick="this.parentElement.classList.toggle(\'open\')">'
+      + '<div><div class="ent-name">' + escHtml(key) + bell + '</div><div class="ent-meta">' + metaBits.join(' · ') + '</div></div>'
+      + '<div class="ent-right"><div class="ent-total">' + fmtMoney(total) + '</div><div class="ent-meta">total premium</div></div>'
+      + '<span class="ent-caret">▶</span></div>'
+      + '<div class="ent-body">';
+    pols.forEach(function(p) { html += renderPolicyCard(p, true); });
+    html += '</div></div>';
+  });
+  return html;
+}
 function filterPols(q) {
   q = (q || '').trim().toLowerCase();
   var cur = document.getElementById('polCurrent');
@@ -1408,12 +1450,14 @@ function renderPolicyCard(p, hideInsured) {
     onlineBtn = '<a href="' + escAttr(p.carrierPortalUrl) + '" target="_blank" rel="noopener" class="pol-online" onclick="event.stopPropagation()">' + escHtml(p.carrierPortalLabel || 'Manage online') + ' ↗</a>';
   }
   var noticeStrip = '';
+  var bellBadge = '';
   if (p.notice) {
     var urgent = p.notice.severity === 'urgent';
-    noticeStrip = '<div class="pol-notice' + (urgent ? '' : ' n-info') + '"><span class="pn-lbl">' + (urgent ? '⚠️ ' : 'ℹ️ ') + escHtml(p.notice.title) + '</span><span class="pn-tap">Tap for details ▸</span></div>';
+    bellBadge = '<span class="pol-bell" title="' + escAttr(p.notice.title) + '" onclick="event.stopPropagation();viewPolicy(\'' + escAttr(p.policyNumber) + '\')">🔔</span>';
+    if (urgent) noticeStrip = '<div class="pol-notice"><span class="pn-lbl">⚠️ ' + escHtml(p.notice.title) + '</span><span class="pn-tap">Tap for details ▸</span></div>';
   }
   var q = [typeLabel, p.policyNumber, p.carrierName, p.writingCompany, p.insuredName, p.producerName, p.limit, p.location, p.notes, (p.vehicles||[]).join(' '), (p.linesOfBusiness||[]).join(' '), s.text, p.premium].filter(Boolean).join(' ').toLowerCase();
-  return '<div class="pol" data-q="' + escAttr(q) + '" onclick="viewPolicy(\'' + escAttr(p.policyNumber) + '\')"><div class="pol-top">' + icon + '<span class="pol-nm">' + escHtml(typeLabel) + '</span><span class="pol-bg ' + s.cls + '">' + s.text + '</span></div>' + carrier + premium + valueLine + '<div class="pol-mt"><span><strong>' + escHtml(p.producerName || '') + '</strong> · ' + escHtml(p.policyNumber) + '</span><span>' + expLabel + expDate + '</span></div>' + noticeStrip + renderRenewalDropdown(p) + onlineBtn + claimBtns + '</div>';
+  return '<div class="pol" data-q="' + escAttr(q) + '" onclick="viewPolicy(\'' + escAttr(p.policyNumber) + '\')"><div class="pol-top">' + icon + '<span class="pol-nm">' + escHtml(typeLabel) + '</span>' + bellBadge + '<span class="pol-bg ' + s.cls + '">' + s.text + '</span></div>' + carrier + premium + valueLine + '<div class="pol-mt"><span><strong>' + escHtml(p.producerName || '') + '</strong> · ' + escHtml(p.policyNumber) + '</span><span>' + expLabel + expDate + '</span></div>' + noticeStrip + renderRenewalDropdown(p) + onlineBtn + claimBtns + '</div>';
 }
 
 /* ══════════════════════════════════════════
