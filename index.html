@@ -137,6 +137,9 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--dark);m
 .pg-bk{background:none;border:none;color:var(--gray-400);font-size:0.8rem;cursor:pointer;display:flex;align-items:center;gap:0.25rem;margin-bottom:0.65rem;font-family:'Outfit',sans-serif;padding:0.35rem 0}
 .pg-t{font-family:'Playfair Display',serif;font-size:1.25rem;color:var(--dark);margin-bottom:0.15rem}
 .pg-s{color:var(--gray-400);font-size:0.8rem;margin-bottom:1rem}
+.pol-search{width:100%;padding:0.7rem 0.9rem;border:1px solid var(--gray-100);border-radius:var(--radius-sm);font-family:'Outfit',sans-serif;font-size:0.85rem;margin-bottom:0.75rem;background:var(--white);box-shadow:var(--shadow-sm)}
+.pol-search:focus{outline:none;border-color:var(--navy)}
+.pol-nores{display:none;background:var(--white);border:1px dashed var(--gray-100);border-radius:var(--radius-sm);padding:1rem;text-align:center;color:var(--gray-400);font-size:0.82rem}
 .pg-g{font-size:0.65rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray-300);margin:0.9rem 0 0.45rem}
 
 /* Policy Cards */
@@ -958,6 +961,8 @@ async function renderPolicies() {
     var current = (polData.commercial || []).concat(polData.personal || []);
     var lineCount = current.reduce(function(s, p) { return s + ((p.linesOfBusiness && p.linesOfBusiness.length) || 1); }, 0);
     html += '<div class="pg-s">' + lineCount + ' active ' + (lineCount === 1 ? 'coverage' : 'coverages') + ' across ' + current.length + ' polic' + (current.length === 1 ? 'y' : 'ies') + '</div>';
+    html += '<input class="pol-search" id="polSearch" type="search" placeholder="Search anything: a policy, coverage, payment, car..." oninput="filterPols(this.value)">';
+    html += '<div class="pol-nores" id="polNoRes">Nothing matching that here. Ask us and we\'ll answer right away.<br><button class="btn-s" style="margin-top:0.6rem;width:auto;padding:0.5rem 1.1rem" onclick="openM(\'conM\')">Ask Your Agent →</button></div>';
 
     var groups = {}, order = [];
     current.forEach(function(p) {
@@ -1117,6 +1122,31 @@ async function submitOutsidePolicy(outsideId, idx) {
   }
 }
 
+function filterPols(q) {
+  q = (q || '').trim().toLowerCase();
+  var cur = document.getElementById('polCurrent');
+  if (!cur) return;
+  var hits = 0;
+  var groups = cur.querySelectorAll('.ent');
+  groups.forEach(function(g) {
+    var any = false;
+    g.querySelectorAll('.pol[data-q]').forEach(function(c) {
+      var m = !q || c.getAttribute('data-q').indexOf(q) !== -1;
+      c.style.display = m ? '' : 'none';
+      if (m) { any = true; hits++; }
+    });
+    g.style.display = (any || !q) ? '' : 'none';
+    if (q && any) g.classList.add('open');
+  });
+  // cards outside groups (if any)
+  cur.querySelectorAll(':scope > .pol[data-q]').forEach(function(c) {
+    var m = !q || c.getAttribute('data-q').indexOf(q) !== -1;
+    c.style.display = m ? '' : 'none';
+    if (m) hits++;
+  });
+  var nr = document.getElementById('polNoRes');
+  if (nr) nr.style.display = (q && hits === 0) ? 'block' : 'none';
+}
 function switchPolTab(tab) {
   var cur = document.getElementById('polCurrent');
   var hist = document.getElementById('polHistory');
@@ -1350,7 +1380,8 @@ function renderPolicyCard(p, hideInsured) {
     var urgent = p.notice.severity === 'urgent';
     noticeStrip = '<div class="pol-notice' + (urgent ? '' : ' n-info') + '"><span class="pn-lbl">' + (urgent ? '⚠️ ' : 'ℹ️ ') + escHtml(p.notice.title) + '</span><span class="pn-tap">Tap for details ▸</span></div>';
   }
-  return '<div class="pol" onclick="viewPolicy(\'' + escAttr(p.policyNumber) + '\')"><div class="pol-top">' + icon + '<span class="pol-nm">' + escHtml(typeLabel) + '</span><span class="pol-bg ' + s.cls + '">' + s.text + '</span></div>' + carrier + premium + valueLine + '<div class="pol-mt"><span><strong>' + escHtml(p.producerName || '') + '</strong> · ' + escHtml(p.policyNumber) + '</span><span>' + expLabel + expDate + '</span></div>' + noticeStrip + renderRenewalDropdown(p) + onlineBtn + claimBtns + '</div>';
+  var q = [typeLabel, p.policyNumber, p.carrierName, p.writingCompany, p.insuredName, p.producerName, p.limit, p.location, p.notes, (p.vehicles||[]).join(' '), (p.linesOfBusiness||[]).join(' '), s.text, p.premium].filter(Boolean).join(' ').toLowerCase();
+  return '<div class="pol" data-q="' + escAttr(q) + '" onclick="viewPolicy(\'' + escAttr(p.policyNumber) + '\')"><div class="pol-top">' + icon + '<span class="pol-nm">' + escHtml(typeLabel) + '</span><span class="pol-bg ' + s.cls + '">' + s.text + '</span></div>' + carrier + premium + valueLine + '<div class="pol-mt"><span><strong>' + escHtml(p.producerName || '') + '</strong> · ' + escHtml(p.policyNumber) + '</span><span>' + expLabel + expDate + '</span></div>' + noticeStrip + renderRenewalDropdown(p) + onlineBtn + claimBtns + '</div>';
 }
 
 /* ══════════════════════════════════════════
