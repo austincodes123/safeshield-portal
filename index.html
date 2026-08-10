@@ -1600,7 +1600,7 @@ function viewPolicy(policyNumber) {
   }
 
   html += '<div class="cprev"' + (p.protection && p.protection.length ? '' : ' style="margin-top:0"') + '><h4>Policy Details</h4>';
-  html += '<div class="cf"><span class="cfl">Policy Number</span><span class="cfv">' + escHtml(p.policyNumber) + '</span></div>';
+  html += '<div class="cf"><span class="cfl">Policy Number</span><span class="cfv" style="cursor:pointer;text-decoration:underline dotted" title="Tap to copy" onclick="var t=this;navigator.clipboard.writeText(\'' + escAttr(p.policyNumber) + '\').then(function(){var o=t.textContent;t.textContent=\'Copied ✓\';setTimeout(function(){t.textContent=o;},1200);})">' + escHtml(p.policyNumber) + '</span></div>';
   html += '<div class="cf"><span class="cfl">Status</span><span class="cfv" style="color:' + statusColor + '">' + statusText + '</span></div>';
   if (p.linesOfBusiness && p.linesOfBusiness.length > 1) html += '<div class="cf"><span class="cfl">Coverage Lines</span><span class="cfv" style="text-align:right">' + p.linesOfBusiness.map(escHtml).join('<br>') + '</span></div>';
   if (p.carrierName) html += '<div class="cf"><span class="cfl">Carrier</span><span class="cfv">' + escHtml(p.carrierName) + '</span></div>';
