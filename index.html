@@ -1507,8 +1507,11 @@ function viewPolicy(policyNumber) {
       });
       html += '</div>';
       if (n.signUrl) {
-        html += '<div style="margin-top:0.8rem;font-weight:800;font-size:0.72rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--dark)">Step 2 · Sign Your Documents</div>';
-        html += '<div id="ssLock-' + num + '" style="display:' + (unlocked ? 'none' : 'block') + ';margin-top:0.45rem;border:1.5px dashed var(--gray-200,#dfe4ea);border-radius:10px;padding:0.7rem;text-align:center;color:var(--gray-400);font-size:0.76rem">🔒 Unlocks after your payment</div>';
+        html += '<div style="margin-top:0.8rem;font-weight:800;font-size:0.72rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--dark)">Step 2 · Your Documents</div>';
+        html += '<div id="ssLock-' + num + '" style="display:' + (unlocked ? 'none' : 'block') + ';margin-top:0.45rem">'
+          + '<a href="' + escAttr(n.signUrl) + '" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none;background:#fff;border:1.5px solid var(--navy);border-radius:10px;padding:0.6rem 0.7rem;font-weight:700;font-size:0.82rem;color:var(--navy)">View the Documents ↗</a>'
+          + '<div style="text-align:center;margin-top:0.4rem;color:var(--gray-400);font-size:0.72rem">🔒 You can read everything now - signing opens here once your payment is made</div>'
+          + '</div>';
         html += '<a id="ssGo-' + num + '" href="' + escAttr(n.signUrl) + '" target="_blank" rel="noopener" class="btn-s" style="display:' + (unlocked ? 'block' : 'none') + ';text-align:center;margin-top:0.45rem;text-decoration:none">' + escHtml(n.signLabel || 'Review & Sign Documents') + ' ↗</a>';
       }
       html += '<div style="text-align:center;margin-top:0.5rem"><a href="#" style="font-size:0.72rem;color:var(--gray-400)" onclick="event.preventDefault();clM(\'polD\');openM(\'conM\')">Question? Message your agent</a></div>';
