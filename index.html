@@ -1488,7 +1488,12 @@ function viewPolicy(policyNumber) {
       html += '</ol>';
     }
     if (n.footnote) html += '<div class="nb-foot">' + escHtml(n.footnote) + '</div>';
-    html += '<button class="btn-s" style="margin-top:0.6rem" onclick="clM(\'polD\');openM(\'conM\')">Reply to Your Agent →</button>';
+    if (n.actionUrl) {
+      html += '<a href="' + escAttr(n.actionUrl) + '" target="_blank" rel="noopener" class="btn-s" style="display:block;text-align:center;margin-top:0.6rem;text-decoration:none">' + escHtml(n.actionLabel || 'Take Care of It') + ' ↗</a>';
+      html += '<div style="text-align:center;margin-top:0.45rem"><a href="#" style="font-size:0.72rem;color:var(--gray-400)" onclick="event.preventDefault();clM(\'polD\');openM(\'conM\')">Question? Message your agent</a></div>';
+    } else {
+      html += '<button class="btn-s" style="margin-top:0.6rem" onclick="clM(\'polD\');openM(\'conM\')">' + escHtml(n.replyLabel || 'Reply to Your Agent') + ' →</button>';
+    }
     html += '</div>';
   }
 
