@@ -153,7 +153,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--dark);m
 .bp.open .bp-car{transform:rotate(90deg)}
 .bp-b{display:none;padding:0 12px 12px;font-size:13px;color:#5b6b7f;line-height:1.55}
 .bp.open .bp-b{display:block}
-.pol-bell{margin-left:auto;margin-right:0.4rem;font-size:0.95rem;cursor:pointer;filter:drop-shadow(0 0 1px rgba(0,0,0,0.15));animation:bellpulse 2.4s ease-in-out infinite}
+.pol-bell{margin-left:auto;margin-right:0.4rem;font-size:0.9rem;cursor:pointer}
 .ent-bell{margin-left:0.4rem;font-size:0.8rem;position:relative;display:inline-block}
 .ent-bell-n{position:absolute;top:-0.35rem;right:-0.55rem;background:#b45309;color:#fff;font-size:0.55rem;font-weight:800;border-radius:99px;padding:0.05rem 0.28rem;line-height:1.1}
 @keyframes bellpulse{0%,100%{transform:rotate(0)}5%{transform:rotate(12deg)}10%{transform:rotate(-10deg)}15%{transform:rotate(6deg)}20%{transform:rotate(0)}}
@@ -788,9 +788,7 @@ async function loadDashboard() {
           if (l && pillLines.indexOf(l) === -1) pillLines.push(l);
         });
       });
-      var shown = pillLines.slice(0, 6);
-      var extra = pillLines.length - shown.length;
-      pills.innerHTML = shown.map(function(l) { return '<span class="snap-pill">' + escHtml(l) + '</span>'; }).join('') + (extra > 0 ? '<span class="snap-pill">+' + extra + ' more</span>' : '');
+      pills.innerHTML = '';
 
       // Update snapshot status — urgent agency notices outrank everything
       var snapH3 = document.querySelector('.snap-info h3');
@@ -986,7 +984,7 @@ async function renderPolicies() {
     var current = (polData.commercial || []).concat(polData.personal || []);
     var lineCount = current.reduce(function(s, p) { return s + ((p.linesOfBusiness && p.linesOfBusiness.length) || 1); }, 0);
     html += '<div class="pg-s">' + lineCount + ' active ' + (lineCount === 1 ? 'coverage' : 'coverages') + ' across ' + current.length + ' polic' + (current.length === 1 ? 'y' : 'ies') + '</div>';
-    html += '<input class="pol-search" id="polSearch" type="search" placeholder="Search anything: a policy, coverage, payment, car..." oninput="filterPols(this.value)">';
+    html += '<input class="pol-search" id="polSearch" type="search" placeholder="Search your policies..." oninput="filterPols(this.value)">';
     html += '<div class="pol-nores" id="polNoRes">Nothing matching that here. Ask us and we\'ll answer right away.<br><button class="btn-s" style="margin-top:0.6rem;width:auto;padding:0.5rem 1.1rem" onclick="openM(\'conM\')">Ask Your Agent →</button></div>';
 
     html += renderEntityGroups(current);
@@ -1123,7 +1121,7 @@ function renderHomePolicies(polData) {
   if (!host || !polData) return;
   var current = (polData.commercial || []).concat(polData.personal || []);
   if (!current.length) { host.innerHTML = ''; return; }
-  var html = '<input class="pol-search" type="search" placeholder="Search anything: a policy, coverage, payment, car..." oninput="filterHomePols(this.value)">';
+  var html = '<input class="pol-search" type="search" placeholder="Search your policies..." oninput="filterHomePols(this.value)">';
   html += '<div class="pol-nores" id="homeNoRes">Nothing matching that here. Ask us and we\'ll answer right away.<br><button class="btn-s" style="margin-top:0.6rem;width:auto;padding:0.5rem 1.1rem" onclick="openM(\'conM\')">Ask Your Agent →</button></div>';
   html += renderEntityGroups(current);
   host.innerHTML = html;
@@ -1176,7 +1174,7 @@ function renderEntityGroups(current) {
       + '<div class="ent-right"><div class="ent-total">' + fmtMoney(total) + '</div><div class="ent-meta">total premium</div></div>'
       + '<span class="ent-caret">▶</span></div>'
       + '<div class="ent-body">';
-    pols.forEach(function(p) { html += renderPolicyCard(p, true); });
+    pols.forEach(function(p) { html += renderPolicyCard(p, true, true); });
     html += '</div></div>';
   });
   return html;
@@ -1416,7 +1414,7 @@ function renderRenewalDropdown(p) {
     + '</div></div>';
 }
 
-function renderPolicyCard(p, hideInsured) {
+function renderPolicyCard(p, hideInsured, compact) {
   var statusMap = {
     'active': { cls: 'ba', text: 'Active' },
     'renewing_soon': { cls: 'be', text: 'Renews Soon' },
@@ -1437,16 +1435,16 @@ function renderPolicyCard(p, hideInsured) {
   var carrierBits = [p.carrierName, hideInsured ? null : p.insuredName].filter(Boolean).map(escHtml).join(' · ');
   var carrier = carrierBits ? '<div class="pol-carrier">' + carrierBits + '</div>' : '';
   var premium = p.premium ? '<div class="pol-premium">' + fmtMoney(p.premium) + premiumTermLabel(p) + '</div>' : '';
-  var valueLine = p.valueSummary ? '<div class="pol-value">🛡️ <span>' + escHtml(p.valueSummary) + '</span></div>' : '';
+  var valueLine = (!compact && p.valueSummary) ? '<div class="pol-value">🛡️ <span>' + escHtml(p.valueSummary) + '</span></div>' : '';
   var claimBtns = '';
-  if (p.claimsPhone || p.claimsUrl) {
+  if (!compact && (p.claimsPhone || p.claimsUrl)) {
     claimBtns = '<div class="pol-actions" onclick="event.stopPropagation()">';
     if (p.claimsPhone) claimBtns += '<a href="tel:' + escAttr(p.claimsPhone.replace(/[^0-9+]/g,'')) + '" class="pol-claim">📞 Call to File Claim</a>';
     if (p.claimsUrl) claimBtns += '<a href="' + escAttr(p.claimsUrl) + '" target="_blank" rel="noopener" class="pol-claim pol-claim-web">🌐 File Claim Online</a>';
     claimBtns += '</div>';
   }
   var onlineBtn = '';
-  if (p.carrierPortalUrl) {
+  if (!compact && p.carrierPortalUrl) {
     onlineBtn = '<a href="' + escAttr(p.carrierPortalUrl) + '" target="_blank" rel="noopener" class="pol-online" onclick="event.stopPropagation()">' + escHtml(p.carrierPortalLabel || 'Manage online') + ' ↗</a>';
   }
   var noticeStrip = '';
