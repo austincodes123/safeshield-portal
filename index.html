@@ -1170,9 +1170,8 @@ function renderEntityGroups(current) {
     var total = groupTotal(key);
     var isBiz = groupIsBiz(key);
     var nBell = pols.filter(function(p) { return p.notice; }).length;
-    // Personal group starts open; businesses start collapsed unless
-    // something inside is renewing soon or carries a notice (never bury either).
-    var open = !isBiz || nBell > 0 || pols.some(function(p) { return p.status === 'renewing_soon'; });
+    // Everything starts collapsed - one tap opens or closes each group.
+    var open = false;
     var metaBits = [(isBiz ? 'Business' : 'Personal'), pols.length + (pols.length === 1 ? ' policy' : ' policies')];
     var bell = nBell > 0 ? '<span class="ent-bell" title="Needs attention">🔔<span class="ent-bell-n">' + nBell + '</span></span>' : '';
     html += '<div class="ent' + (open ? ' open' : '') + '">'
@@ -1301,8 +1300,8 @@ function renderEnhancements(extras) {
     html += '<div id="bpCard" style="background:#fff;border:1px solid var(--gray-200,#e6e9ee);border-radius:14px;padding:4px 18px 4px;margin:0 1.25rem 16px;color:var(--dark,#1d2b3e)">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;cursor:pointer" onclick="var x=document.getElementById(\'bpBody\');var o=x.style.display!==\'none\';x.style.display=o?\'none\':\'block\';document.getElementById(\'bpCar\').style.transform=o?\'\':\'rotate(90deg)\'">'
       + '<h3 style="margin:0;font-size:15px">Your payment plan</h3>'
-      + '<span style="display:flex;align-items:center;gap:8px">' + meta + '<span id="bpCar" class="bp-car"' + (nAct > 0 ? ' style="transform:rotate(90deg)"' : '') + '>▶</span></span></div>'
-      + '<div id="bpBody" style="display:' + (nAct > 0 ? 'block' : 'none') + ';padding-bottom:12px">';
+      + '<span style="display:flex;align-items:center;gap:8px">' + meta + '<span id="bpCar" class="bp-car">▶</span></span></div>'
+      + '<div id="bpBody" style="display:none;padding-bottom:12px">';
     (b.plans || []).forEach(function(pl){
       var nm = pl.name || pl.carrier || 'Payment plan';
       var amt = pl.amount || (pl.dueAtBinding != null ? fmtMoney(pl.dueAtBinding) + ' at bind' : '');
@@ -1310,7 +1309,7 @@ function renderEnhancements(extras) {
       var chip = pl.chip ? '<span class="bp-chip' + chipCls + '">' + escHtml(pl.chip) + '</span>' : '';
       var detail = pl.detail || pl.plan || '';
       var link = pl.linkUrl ? '<a href="' + escAttr(pl.linkUrl) + '" target="_blank" rel="noopener" class="btn-s" style="display:inline-block;width:auto;padding:0.5rem 1rem;margin-top:0.5rem;text-decoration:none" onclick="event.stopPropagation()">' + escHtml(pl.linkLabel || 'Manage online') + ' ↗</a>' : '';
-      html += '<div class="bp' + (pl.status === 'action' ? ' open' : '') + '">'
+      html += '<div class="bp">'
         + '<div class="bp-h" onclick="this.parentElement.classList.toggle(\'open\')">'
         + '<span class="bp-nm">' + escHtml(nm) + '</span>'
         + '<span class="bp-right">' + chip + (amt ? '<span class="bp-amt">' + escHtml(String(amt)) + '</span>' : '') + '<span class="bp-car">▶</span></span></div>'
