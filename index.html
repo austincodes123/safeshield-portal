@@ -1508,10 +1508,19 @@ function viewPolicy(policyNumber) {
   html += '<div class="cf"><span class="cfl">Status</span><span class="cfv" style="color:' + statusColor + '">' + statusText + '</span></div>';
   if (p.linesOfBusiness && p.linesOfBusiness.length > 1) html += '<div class="cf"><span class="cfl">Coverage Lines</span><span class="cfv" style="text-align:right">' + p.linesOfBusiness.map(escHtml).join('<br>') + '</span></div>';
   if (p.carrierName) html += '<div class="cf"><span class="cfl">Carrier</span><span class="cfv">' + escHtml(p.carrierName) + '</span></div>';
+  if (p.limit) html += '<div class="cf"><span class="cfl">Coverage</span><span class="cfv" style="text-align:right">' + escHtml(p.limit) + '</span></div>';
   if (p.premium) html += '<div class="cf"><span class="cfl">Premium</span><span class="cfv">' + fmtMoney(p.premium) + premiumTermLabel(p) + '</span></div>';
   if (effDate) html += '<div class="cf"><span class="cfl">Effective</span><span class="cfv">' + effDate + '</span></div>';
   if (expDate) html += '<div class="cf"><span class="cfl">Expiration</span><span class="cfv">' + expDate + '</span></div>';
   html += '</div>';
+
+  // Billing — how and when this policy gets paid
+  if (p.billing || p.carrierPortalUrl) {
+    html += '<div class="cprev"><h4>💳 Billing</h4>';
+    if (p.billing) html += '<div style="font-size:0.8rem;color:var(--gray-500);line-height:1.55;padding:0.2rem 0">' + escHtml(p.billing) + '</div>';
+    if (p.carrierPortalUrl) html += '<a href="' + escAttr(p.carrierPortalUrl) + '" target="_blank" rel="noopener" class="btn-s" style="display:inline-block;width:auto;padding:0.5rem 1rem;margin-top:0.4rem;text-decoration:none">' + escHtml(p.carrierPortalLabel || 'Manage online') + ' ↗</a>';
+    html += '</div>';
+  }
 
   // Renewal comparison — same data as the card drop-down, always expanded here
   if (p.renewal && Number(p.renewal.premium) > 0) {
@@ -1528,6 +1537,8 @@ function viewPolicy(policyNumber) {
     if (rDate) html += '<div class="cf"><span class="cfl">New term starts</span><span class="cfv">' + rDate + '</span></div>';
     html += '</div>';
   }
+
+  if (p.notes) html += '<div class="cprev"><h4>From Your Agent</h4><div style="font-size:0.8rem;color:var(--gray-500);line-height:1.55;padding:0.2rem 0">' + escHtml(p.notes) + '</div></div>';
 
   html += '<div id="polDExtra"></div>';
 
