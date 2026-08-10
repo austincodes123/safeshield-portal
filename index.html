@@ -140,6 +140,19 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--dark);m
 .pol-search{width:100%;padding:0.7rem 0.9rem;border:1px solid var(--gray-100);border-radius:var(--radius-sm);font-family:'Outfit',sans-serif;font-size:0.85rem;margin-bottom:0.75rem;background:var(--white);box-shadow:var(--shadow-sm)}
 .pol-search:focus{outline:none;border-color:var(--navy)}
 .pol-nores{display:none;background:var(--white);border:1px dashed var(--gray-100);border-radius:var(--radius-sm);padding:1rem;text-align:center;color:var(--gray-400);font-size:0.82rem}
+.bp{border:1px solid #eef1f5;border-radius:10px;margin-bottom:8px;overflow:hidden;background:#fff}
+.bp-h{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 12px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.bp-h:hover{background:#fafbfc}
+.bp-nm{font-weight:600;font-size:13.5px;color:var(--dark,#1d2b3e)}
+.bp-right{display:flex;align-items:center;gap:8px;white-space:nowrap}
+.bp-amt{font-size:13px;font-weight:700}
+.bp-chip{font-size:9.5px;font-weight:800;padding:3px 8px;border-radius:99px;letter-spacing:.06em;text-transform:uppercase;background:#eef1f5;color:#5b6b7f}
+.bp-chip.paid{background:#e8f3ec;color:#177245}
+.bp-chip.action{background:#fff3d9;color:#a16207}
+.bp-car{color:#c3ccd6;font-size:11px;transition:transform .15s}
+.bp.open .bp-car{transform:rotate(90deg)}
+.bp-b{display:none;padding:0 12px 12px;font-size:13px;color:#5b6b7f;line-height:1.55}
+.bp.open .bp-b{display:block}
 .pg-g{font-size:0.65rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray-300);margin:0.9rem 0 0.45rem}
 
 /* Policy Cards */
@@ -1233,9 +1246,17 @@ function renderEnhancements(extras) {
       + '<div style="display:inline-block;background:#e8f3ec;color:#177245;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:4px 10px;border-radius:99px;margin-bottom:10px">Billing</div>'
       + '<h3 style="margin:0 0 10px;font-size:16px">Your payment plan</h3>';
     (b.plans || []).forEach(function(pl){
-      html += '<div style="display:flex;justify-content:space-between;gap:12px;font-size:13.5px;padding:7px 0;border-bottom:1px solid #eef1f5">'
-        + '<span style="color:#5b6b7f">' + escHtml(pl.carrier) + ' · ' + escHtml(pl.plan) + '</span>'
-        + '<span style="font-weight:600">' + (pl.dueAtBinding != null ? fmtMoney(pl.dueAtBinding) + ' at bind' : '') + '</span></div>';
+      var nm = pl.name || pl.carrier || 'Payment plan';
+      var amt = pl.amount || (pl.dueAtBinding != null ? fmtMoney(pl.dueAtBinding) + ' at bind' : '');
+      var chipCls = pl.status === 'paid' ? ' paid' : (pl.status === 'action' ? ' action' : '');
+      var chip = pl.chip ? '<span class="bp-chip' + chipCls + '">' + escHtml(pl.chip) + '</span>' : '';
+      var detail = pl.detail || pl.plan || '';
+      var link = pl.linkUrl ? '<a href="' + escAttr(pl.linkUrl) + '" target="_blank" rel="noopener" class="btn-s" style="display:inline-block;width:auto;padding:0.5rem 1rem;margin-top:0.5rem;text-decoration:none" onclick="event.stopPropagation()">' + escHtml(pl.linkLabel || 'Manage online') + ' ↗</a>' : '';
+      html += '<div class="bp' + (pl.status === 'action' ? ' open' : '') + '">'
+        + '<div class="bp-h" onclick="this.parentElement.classList.toggle(\'open\')">'
+        + '<span class="bp-nm">' + escHtml(nm) + '</span>'
+        + '<span class="bp-right">' + chip + (amt ? '<span class="bp-amt">' + escHtml(String(amt)) + '</span>' : '') + '<span class="bp-car">▶</span></span></div>'
+        + '<div class="bp-b">' + escHtml(detail) + (link ? '<br>' + link : '') + '</div></div>';
     });
     if (b.dueAtBinding != null) html += '<div style="display:flex;justify-content:space-between;gap:12px;font-size:14px;font-weight:700;padding:9px 0 2px"><span>Due at binding</span><span>' + fmtMoney(b.dueAtBinding) + '</span></div>';
     if (b.method) html += '<div style="font-size:12px;color:#5b6b7f;margin-top:6px">' + escHtml(b.method) + '</div>';
