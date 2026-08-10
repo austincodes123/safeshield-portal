@@ -1150,7 +1150,7 @@ function askOpen() {
   openM('askM');
   var box = document.getElementById('askMsgs');
   if (box && !box.children.length) {
-    askPush('a', "Hi" + ((window._client && window._client.firstName) ? ' ' + window._client.firstName : '') + "! I'm CASEY, Safeshield's assistant. I know almost everything about your policies - amounts, payments, renewal dates, what needs attention. Ask away! For official coverage decisions, Austin is your person.");
+    askPush('a', "Hi" + ((window._client && window._client.firstName) ? ' ' + window._client.firstName : '') + "! I'm CASEY, Safeshield's assistant. I know almost everything about your policies - amounts, payments, renewal dates, what needs attention. Ask me anything!");
   }
   var inp = document.getElementById('askInput');
   if (inp) setTimeout(function(){ inp.focus(); }, 150);
@@ -1183,11 +1183,11 @@ async function askSend() {
       askHist.push({ role: 'assistant', content: r.answer });
       if (askHist.length > 16) askHist = askHist.slice(-16);
     } else {
-      askPush('a', "I couldn't reach the answer service just now. Tap 'Message your agent' below and Austin will take care of you directly.");
+      askPush('a', "I couldn't reach the answer service just now. Tap 'Message your agent' below and a real person will take care of you directly.");
     }
   } catch (e) {
     var tt2 = document.getElementById('askTyping'); if (tt2) tt2.remove();
-    askPush('a', "I couldn't reach the answer service just now. Tap 'Message your agent' below and Austin will take care of you directly.");
+    askPush('a', "I couldn't reach the answer service just now. Tap 'Message your agent' below and a real person will take care of you directly.");
   }
 }
 function ssUnlock(num) {
