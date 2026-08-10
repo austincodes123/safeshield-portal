@@ -1126,6 +1126,13 @@ function renderHomePolicies(polData) {
   html += renderEntityGroups(current);
   host.innerHTML = html;
 }
+function ssUnlock(num) {
+  try { localStorage.setItem('ssPaid-' + num, '1'); } catch (e) {}
+  var l = document.getElementById('ssLock-' + num);
+  var g = document.getElementById('ssGo-' + num);
+  if (l) l.style.display = 'none';
+  if (g) g.style.display = 'block';
+}
 function filterHomePols(q) {
   q = (q || '').trim().toLowerCase();
   var root = document.getElementById('homePols');
@@ -1488,7 +1495,25 @@ function viewPolicy(policyNumber) {
       html += '</ol>';
     }
     if (n.footnote) html += '<div class="nb-foot">' + escHtml(n.footnote) + '</div>';
-    if (n.actionUrl) {
+    if (n.paymentOptions && n.paymentOptions.length) {
+      var num = String(p.policyNumber || '').replace(/[^A-Za-z0-9]/g, '');
+      var unlocked = false; try { unlocked = localStorage.getItem('ssPaid-' + num) === '1'; } catch (e) {}
+      html += '<div style="margin-top:0.75rem;font-weight:800;font-size:0.72rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--dark)">Step 1 · Make Your Payment</div>';
+      html += '<div style="display:flex;gap:0.5rem;margin-top:0.45rem;flex-wrap:wrap">';
+      n.paymentOptions.forEach(function(opt) {
+        html += '<a href="' + escAttr(opt.url) + '" target="_blank" rel="noopener" onclick="ssUnlock(\'' + num + '\')" style="flex:1;min-width:140px;text-decoration:none;background:#fff;border:1.5px solid var(--navy);border-radius:10px;padding:0.6rem 0.7rem;text-align:center">'
+          + '<div style="font-weight:700;font-size:0.82rem;color:var(--navy)">' + escHtml(opt.label) + ' ↗</div>'
+          + (opt.sub ? '<div style="font-size:0.67rem;color:var(--gray-400);margin-top:0.15rem">' + escHtml(opt.sub) + '</div>' : '')
+          + '</a>';
+      });
+      html += '</div>';
+      if (n.signUrl) {
+        html += '<div style="margin-top:0.8rem;font-weight:800;font-size:0.72rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--dark)">Step 2 · Sign Your Documents</div>';
+        html += '<div id="ssLock-' + num + '" style="display:' + (unlocked ? 'none' : 'block') + ';margin-top:0.45rem;border:1.5px dashed var(--gray-200,#dfe4ea);border-radius:10px;padding:0.7rem;text-align:center;color:var(--gray-400);font-size:0.76rem">🔒 Unlocks after your payment</div>';
+        html += '<a id="ssGo-' + num + '" href="' + escAttr(n.signUrl) + '" target="_blank" rel="noopener" class="btn-s" style="display:' + (unlocked ? 'block' : 'none') + ';text-align:center;margin-top:0.45rem;text-decoration:none">' + escHtml(n.signLabel || 'Review & Sign Documents') + ' ↗</a>';
+      }
+      html += '<div style="text-align:center;margin-top:0.5rem"><a href="#" style="font-size:0.72rem;color:var(--gray-400)" onclick="event.preventDefault();clM(\'polD\');openM(\'conM\')">Question? Message your agent</a></div>';
+    } else if (n.actionUrl) {
       html += '<a href="' + escAttr(n.actionUrl) + '" target="_blank" rel="noopener" class="btn-s" style="display:block;text-align:center;margin-top:0.6rem;text-decoration:none">' + escHtml(n.actionLabel || 'Take Care of It') + ' ↗</a>';
       html += '<div style="text-align:center;margin-top:0.45rem"><a href="#" style="font-size:0.72rem;color:var(--gray-400)" onclick="event.preventDefault();clM(\'polD\');openM(\'conM\')">Question? Message your agent</a></div>';
     } else {
