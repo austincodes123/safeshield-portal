@@ -496,7 +496,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--dark);m
 
     <div class="sec">
       <div class="sec-lbl fi f2">What do you need?</div>
-      <div class="act-grid"><div class="act" onclick="askOpen()"><div class="act-ic">💬</div><div class="act-t">Ask a Question</div><div class="act-s">Instant answers, any time</div></div>
+      <div class="act-grid"><div class="act" onclick="askOpen()"><div class="act-ic">💬</div><div class="act-t">Questions? Ask CASEY</div><div class="act-s">Knows almost everything about your policies</div></div>
         <div class="act fi f2" id="certAction" onclick="openCertModal()" style="display:none"><div class="act-ic ig">📋</div><h3>Get a Certificate</h3><p>ACORD 25 — instant PDF</p></div>
         <div class="act fi f3" onclick="openM('reqM')"><div class="act-ic ib">✏️</div><h3>Request a Change</h3><p>Vehicle, driver, address</p></div>
         <div class="act fi f3" onclick="showPg('docs')"><div class="act-ic igr">📁</div><h3>My Documents</h3><p>Dec pages, certs, ID cards</p></div>
@@ -591,10 +591,10 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--dark);m
 
 <!-- ══════ CONTACT MODAL ══════ -->
 <div class="mo" id="askM" onclick="clBg(event,'askM')"><div class="mp" onclick="event.stopPropagation()"><div class="m-bar"></div>
-<h2>Ask a Question</h2><p class="ms">Instant answers about your policies, payments, and coverage</p>
+<h2>Ask CASEY</h2><p class="ms">CASEY knows almost everything about your policies - amounts, payments, renewal dates</p>
 <div class="ask-msgs" id="askMsgs"></div>
 <div class="ask-row"><input id="askInput" placeholder="e.g. What's my deductible on the Tesla?" onkeydown="if(event.key==='Enter')askSend()"><button class="ask-send" onclick="askSend()">→</button></div>
-<div style="text-align:center;margin-top:0.5rem"><a href="#" style="font-size:0.72rem;color:var(--gray-400)" onclick="event.preventDefault();clM('askM');openM('conM')">Rather ask Austin directly? Message your agent</a></div>
+<div style="margin-top:0.55rem;font-size:0.66rem;color:var(--gray-400);line-height:1.45;text-align:center">CASEY answers from your account records for general guidance. Your policy documents govern what is and isn't covered. Please confirm anything important with your agent.</div><div style="text-align:center;margin-top:0.35rem"><a href="#" style="font-size:0.72rem;color:var(--gray-400)" onclick="event.preventDefault();clM('askM');openM('conM')">Rather ask Austin directly? Message your agent</a></div>
 </div></div>
 <div class="mo" id="conM" onclick="clBg(event,'conM')"><div class="mp" onclick="event.stopPropagation()"><div class="m-bar"></div>
 <div id="cf"><h2>Message Your Agent</h2><p class="ms">Send a quick message to your agent</p>
@@ -1146,7 +1146,7 @@ function askOpen() {
   openM('askM');
   var box = document.getElementById('askMsgs');
   if (box && !box.children.length) {
-    askPush('a', "Hi" + ((window._client && window._client.firstName) ? ' ' + window._client.firstName : '') + "! Ask me anything about your policies - coverage, payments, renewal dates, what's needed. I'll answer from your account.");
+    askPush('a', "Hi" + ((window._client && window._client.firstName) ? ' ' + window._client.firstName : '') + "! I'm CASEY, Safeshield's assistant. I know almost everything about your policies - amounts, payments, renewal dates, what needs attention. Ask away! For official coverage decisions, Austin is your person.");
   }
   var inp = document.getElementById('askInput');
   if (inp) setTimeout(function(){ inp.focus(); }, 150);
