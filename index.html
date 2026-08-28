@@ -825,7 +825,7 @@ async function loadDashboard() {
         // Pills: name ONLY the policy that needs attention, then reassure
         // about the rest — listing every coverage here reads as if they all
         // have a problem.
-        var urgentLabels = urgent.map(function(p) { return (p.policyType || 'Policy') + (p.carrierName ? ' · ' + p.carrierName : ''); });
+        var urgentLabels = urgent.map(function(p) { return (p.policyType || 'Policy') + (p.carrierName ? ' · ' + friendlyCarrier(p.carrierName) : ''); });
         var countLines = function(s, p) { return s + ((p.linesOfBusiness && p.linesOfBusiness.length) || 1); };
         var okCount = currentPols.reduce(countLines, 0) - urgent.reduce(countLines, 0);
         pills.innerHTML = urgentLabels.map(function(l) { return '<span class="snap-pill" style="background:#fde8e8;border-color:rgba(185,28,28,0.25);color:#b91c1c;font-weight:700">' + escHtml(l) + '</span>'; }).join('')
@@ -1320,6 +1320,24 @@ function fmtMoney(n) {
   return '$' + v.toLocaleString('en-US', { minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: 2 });
 }
 
+/* Map raw NowCerts/Ivans writing-company names to the brand the client knows.
+   Falls back to title-casing ALL-CAPS names so downloads never look raw. */
+function friendlyCarrier(name) {
+  if (!name) return name;
+  var n = String(name).toUpperCase();
+  if (n.indexOf('PACIFIC EMPLOYERS') !== -1) return 'Chubb (Pacific Employers Ins. Co.)';
+  if (n.indexOf('BANKERS STANDARD') !== -1) return 'Chubb (Bankers Standard Ins. Co.)';
+  if (n.indexOf('FEDERAL INS') !== -1 || n.indexOf('FEDERAL INSURANCE') !== -1) return 'Chubb (Federal Insurance Co.)';
+  if (n.indexOf('ACE AMERICAN') !== -1 || n.indexOf('ACE PROPERTY') !== -1 || n.indexOf('WESTCHESTER') !== -1 || n.indexOf('INDEMNITY INS CO OF NORTH AMERICA') !== -1) return 'Chubb (' + toTitleCaseCarrier(name) + ')';
+  if (n.indexOf('HARTFORD') !== -1) return 'The Hartford';
+  if (name === n && /[A-Z]/.test(name)) return toTitleCaseCarrier(name);
+  return name;
+}
+function toTitleCaseCarrier(s) {
+  return String(s).toLowerCase().replace(/\b([a-z])/g, function(m, c) { return c.toUpperCase(); })
+    .replace(/\bIns\b/g, 'Ins.').replace(/\bCo\b/g, 'Co.').replace(/\bLlc\b/g, 'LLC');
+}
+
 /* ══════════════════════════════════════════
    CURATED-CLIENT ENHANCEMENTS
    Property cross-sell card, payment-plan card, and COI-to-team routing.
@@ -1373,11 +1391,35 @@ function renderEnhancements(extras) {
       var chip = pl.chip ? '<span class="bp-chip' + chipCls + '">' + escHtml(pl.chip) + '</span>' : '';
       var detail = pl.detail || pl.plan || '';
       var link = pl.linkUrl ? '<a href="' + escAttr(pl.linkUrl) + '" target="_blank" rel="noopener" class="btn-s" style="display:inline-block;width:auto;padding:0.5rem 1rem;margin-top:0.5rem;text-decoration:none" onclick="event.stopPropagation()">' + escHtml(pl.linkLabel || 'Manage online') + ' ↗</a>' : '';
+      // Next payment shown right on the plan header when the schedule provides one
+      var next = (pl.schedule || []).filter(function(r){ return r.status === 'next'; })[0];
+      if (next && !pl.amount) amt = 'Next: ' + fmtMoney(next.amount) + (next.label ? ' \u00b7 ' + next.label : '');
+      var body = detail ? '<div style="margin-bottom:8px">' + escHtml(detail) + '</div>' : '';
+      // Paid to date summary
+      var paidRows = (pl.schedule || []).filter(function(r){ return r.status === 'paid'; });
+      if (paidRows.length) {
+        var paidSum = paidRows.reduce(function(a, r){ return a + (r.amount || 0); }, 0);
+        body += '<div style="font-size:12.5px;font-weight:700;margin-bottom:4px">Paid so far: ' + fmtMoney(paidSum) + '</div>';
+      }
+      // Full schedule: paid history + upcoming payments
+      if (pl.schedule && pl.schedule.length) {
+        body += '<div style="border:1px solid var(--gray-200,#e6e9ee);border-radius:10px;overflow:hidden;margin:4px 0 6px">';
+        pl.schedule.forEach(function(r){
+          var st = r.status === 'paid' ? '<span class="bp-chip paid">Paid</span>'
+                 : r.status === 'next' ? '<span class="bp-chip action">Next</span>'
+                 : '<span class="bp-chip">Upcoming</span>';
+          body += '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 10px;font-size:12.5px;border-bottom:1px solid var(--gray-100,#f1f3f6)">'
+            + '<span>' + escHtml(r.label || '') + (r.note ? '<span style="color:#8a97a8"> \u00b7 ' + escHtml(r.note) + '</span>' : '') + '</span>'
+            + '<span style="display:flex;align-items:center;gap:8px">' + st + '<span style="font-weight:700">' + fmtMoney(r.amount) + '</span></span></div>';
+        });
+        body += '</div>';
+      }
+      if (pl.scheduleNote) body += '<div style="font-size:11.5px;color:#8a97a8;margin-bottom:4px">' + escHtml(pl.scheduleNote) + '</div>';
       html += '<div class="bp">'
         + '<div class="bp-h" onclick="this.parentElement.classList.toggle(\'open\')">'
         + '<span class="bp-nm">' + escHtml(nm) + '</span>'
         + '<span class="bp-right">' + chip + (amt ? '<span class="bp-amt">' + escHtml(String(amt)) + '</span>' : '') + '<span class="bp-car">▶</span></span></div>'
-        + '<div class="bp-b">' + escHtml(detail) + (link ? '<br>' + link : '') + '</div></div>';
+        + '<div class="bp-b">' + body + (link ? link : '') + '</div></div>';
     });
     if (b.dueAtBinding != null) html += '<div style="display:flex;justify-content:space-between;gap:12px;font-size:14px;font-weight:700;padding:9px 0 2px"><span>Due at binding</span><span>' + fmtMoney(b.dueAtBinding) + '</span></div>';
     if (b.method) html += '<div style="font-size:12px;color:#5b6b7f;margin-top:6px">' + escHtml(b.method) + '</div>';
@@ -1502,7 +1544,7 @@ function renderPolicyCard(p, hideInsured, compact) {
   var icon = getPolicyIcon(p.policyType);
   // A package policy carries several lines on one number — show them all
   var typeLabel = (p.linesOfBusiness && p.linesOfBusiness.length > 1) ? p.linesOfBusiness.join(' + ') : p.policyType;
-  var carrierBits = [p.carrierName, hideInsured ? null : p.insuredName].filter(Boolean).map(escHtml).join(' · ');
+  var carrierBits = [friendlyCarrier(p.carrierName), hideInsured ? null : p.insuredName].filter(Boolean).map(escHtml).join(' · ');
   var carrier = carrierBits ? '<div class="pol-carrier">' + carrierBits + '</div>' : '';
   var premium = p.premium ? '<div class="pol-premium">' + fmtMoney(p.premium) + premiumTermLabel(p) + '</div>' : '';
   var valueLine = (!compact && p.valueSummary) ? '<div class="pol-value">🛡️ <span>' + escHtml(p.valueSummary) + '</span></div>' : '';
@@ -1603,7 +1645,8 @@ function viewPolicy(policyNumber) {
   html += '<div class="cf"><span class="cfl">Policy Number</span><span class="cfv" style="cursor:pointer;text-decoration:underline dotted" title="Tap to copy" onclick="var t=this;navigator.clipboard.writeText(\'' + escAttr(p.policyNumber) + '\').then(function(){var o=t.textContent;t.textContent=\'Copied ✓\';setTimeout(function(){t.textContent=o;},1200);})">' + escHtml(p.policyNumber) + '</span></div>';
   html += '<div class="cf"><span class="cfl">Status</span><span class="cfv" style="color:' + statusColor + '">' + statusText + '</span></div>';
   if (p.linesOfBusiness && p.linesOfBusiness.length > 1) html += '<div class="cf"><span class="cfl">Coverage Lines</span><span class="cfv" style="text-align:right">' + p.linesOfBusiness.map(escHtml).join('<br>') + '</span></div>';
-  if (p.carrierName) html += '<div class="cf"><span class="cfl">Carrier</span><span class="cfv">' + escHtml(p.carrierName) + '</span></div>';
+  if (p.carrierName) html += '<div class="cf"><span class="cfl">Carrier</span><span class="cfv">' + escHtml(friendlyCarrier(p.carrierName)) + '</span></div>';
+  if (p.carrierName && friendlyCarrier(p.carrierName) !== p.carrierName && !p.writingCompany) html += '<div class="cf"><span class="cfl">Underwritten by</span><span class="cfv">' + escHtml(toTitleCaseCarrier(p.carrierName)) + '</span></div>';
   if (p.limit) html += '<div class="cf"><span class="cfl">Coverage</span><span class="cfv" style="text-align:right">' + escHtml(p.limit) + '</span></div>';
   if (p.premium) html += '<div class="cf"><span class="cfl">Premium</span><span class="cfv">' + fmtMoney(p.premium) + premiumTermLabel(p) + '</span></div>';
   if (effDate) html += '<div class="cf"><span class="cfl">Effective</span><span class="cfv">' + effDate + '</span></div>';
@@ -1835,7 +1878,7 @@ async function openCertModal() {
   var html = '<h2>Generate Certificate</h2><p class="ms">Select the policies to include on your ACORD 25 (select one or more)</p>';
   commercial.forEach(function(p, i) {
     var expDate = p.renewalDate ? new Date(p.renewalDate).toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}) : '';
-    html += '<div class="cp" data-idx="' + i + '" onclick="toggleCertPolicy(this,' + i + ')"><h4>' + escHtml(p.policyType) + '</h4><p>' + escHtml(p.carrierName || '') + ' · ' + escHtml(p.policyNumber) + ' · Exp ' + expDate + '</p></div>';
+    html += '<div class="cp" data-idx="' + i + '" onclick="toggleCertPolicy(this,' + i + ')"><h4>' + escHtml(p.policyType) + '</h4><p>' + escHtml(friendlyCarrier(p.carrierName) || '') + ' · ' + escHtml(p.policyNumber) + ' · Exp ' + expDate + '</p></div>';
   });
   html += '<div style="margin-top:1rem;display:flex;gap:0.5rem"><button class="btn-s" id="certNextBtn" onclick="certNext()" disabled style="opacity:0.5">Continue →</button>';
   html += '<button class="m-bk" style="margin:0" onclick="selectAllCert()">Select All</button></div>';
@@ -1875,7 +1918,7 @@ function certNext() {
       var p = commercial[i];
       if (!p) return;
       var expDate = p.renewalDate ? new Date(p.renewalDate).toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}) : '';
-      prevHtml += '<div class="cf"><span class="cfl">' + escHtml(p.policyType) + '</span><span class="cfv">' + escHtml(p.carrierName || '') + ' · ' + escHtml(p.policyNumber) + (expDate ? ' · Exp ' + expDate : '') + '</span></div>';
+      prevHtml += '<div class="cf"><span class="cfl">' + escHtml(p.policyType) + '</span><span class="cfv">' + escHtml(friendlyCarrier(p.carrierName) || '') + ' · ' + escHtml(p.policyNumber) + (expDate ? ' · Exp ' + expDate : '') + '</span></div>';
     });
     preview.innerHTML = prevHtml;
   }
